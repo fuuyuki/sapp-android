@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "170941832506",
+    "project_id": "sap-notif",
+    "storage_bucket": "sap-notif.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:170941832506:android:a4acf61d3c18cd38d50403",
+        "android_client_info": {
+          "package_name": "com.example.sapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzivrsgpJxcZhpZ_eQo6nJjoPzug2oT48"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
