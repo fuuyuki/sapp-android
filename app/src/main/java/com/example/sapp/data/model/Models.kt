@@ -1,4 +1,3 @@
-// com.example.sapp.data.model.Models.kt
 package com.example.sapp.data.model
 
 import java.util.UUID
