@@ -10,9 +10,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Visibility
@@ -21,26 +18,26 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.firebase.messaging.FirebaseMessaging
-import com.example.sapp.data.model.DeviceOut
 import com.example.sapp.data.model.ScheduleOut
 import com.example.sapp.data.network.RetrofitClient
 import com.example.sapp.data.network.dataStore
 import com.example.sapp.data.repository.AppRepository
-import com.example.sapp.ui.DashboardScreen
-import com.example.sapp.ui.MainViewModel
-import com.example.sapp.ui.ScheduleScreen
-import com.example.sapp.ui.AddMedicationScreen
+import com.example.sapp.ui.*
 import com.example.sapp.worker.NotificationWorker
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import com.example.sapp.data.model.DeviceOut
 
 class MainActivity : ComponentActivity() {
     private val tokenKey = stringPreferencesKey("jwt_token")
@@ -180,7 +177,12 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                             "medlogs" -> {
-                                PlaceholderScreen("Medlogs", onBack = { currentSubScreen = "dashboard" })
+                                val logs by viewModel.medlogs.collectAsState()
+                                MedicationLogsScreen(
+                                    logs = logs,
+                                    onBack = { currentSubScreen = "dashboard" },
+                                    onRefresh = { viewModel.refreshDashboard() }
+                                )
                             }
                             "add_meds" -> {
                                 AddMedicationScreen(
@@ -409,5 +411,3 @@ fun StatusBadge(status: String) {
         )
     }
 }
-
-
