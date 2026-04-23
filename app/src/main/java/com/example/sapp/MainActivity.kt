@@ -32,7 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-
+import com.example.sapp.ui.theme.MedicalAppTheme
 
 
 class MainActivity : ComponentActivity() {
@@ -45,171 +45,173 @@ class MainActivity : ComponentActivity() {
         val viewModel = MainViewModel(repository)
 
         setContent {
-            val isLoggedIn by viewModel.loginSuccess.collectAsState()
-            val userProfile by viewModel.userProfile.collectAsState()
-            val adherenceSummary by viewModel.adherenceSummary.collectAsState()
-            val errorMessage by viewModel.errorMessage.collectAsState()
-            val scope = rememberCoroutineScope()
-            val context = LocalContext.current
+            MedicalAppTheme{
+                val isLoggedIn by viewModel.loginSuccess.collectAsState()
+                val userProfile by viewModel.userProfile.collectAsState()
+                val adherenceSummary by viewModel.adherenceSummary.collectAsState()
+                val errorMessage by viewModel.errorMessage.collectAsState()
+                val scope = rememberCoroutineScope()
+                val context = LocalContext.current
 
-            var currentScreen by remember { mutableStateOf("login") }
-            var currentSubScreen by remember { mutableStateOf("dashboard") }
-            var scheduleToEdit by remember { mutableStateOf<ScheduleOut?>(null) }
+                var currentScreen by remember { mutableStateOf("login") }
+                var currentSubScreen by remember { mutableStateOf("dashboard") }
+                var scheduleToEdit by remember { mutableStateOf<ScheduleOut?>(null) }
 
-            // Permission handling for Android 13+
-            val permissionLauncher = rememberLauncherForActivityResult(
-                ActivityResultContracts.RequestPermission()
-            ) { isGranted ->
-                if (!isGranted) {
-                    Toast.makeText(
-                        context,
-                        "Notification permission denied. Alerts will not be shown.",
-                        Toast.LENGTH_LONG
-                    ).show()
+                // Permission handling for Android 13+
+                val permissionLauncher = rememberLauncherForActivityResult(
+                    ActivityResultContracts.RequestPermission()
+                ) { isGranted ->
+                    if (!isGranted) {
+                        Toast.makeText(
+                            context,
+                            "Notification permission denied. Alerts will not be shown.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
-            }
 
-            LaunchedEffect(Unit) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                LaunchedEffect(Unit) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
                 }
-            }
 
-            // Register FCM token once user is logged in
-            LaunchedEffect(isLoggedIn) {
-                if (isLoggedIn) {
-                    FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            val token = task.result
-                            Log.d("FCM", "FCM Device Token: $token")
-                            viewModel.registerFcmToken(token)
+                // Register FCM token once user is logged in
+                LaunchedEffect(isLoggedIn) {
+                    if (isLoggedIn) {
+                        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                val token = task.result
+                                Log.d("FCM", "FCM Device Token: $token")
+                                viewModel.registerFcmToken(token)
+                            }
                         }
                     }
                 }
-            }
 
-            LaunchedEffect(errorMessage) {
-                errorMessage?.let {
-                    Toast.makeText(context, it, Toast.LENGTH_LONG).show()
-                    viewModel.errorMessage.value = null
+                LaunchedEffect(errorMessage) {
+                    errorMessage?.let {
+                        Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+                        viewModel.errorMessage.value = null
+                    }
                 }
-            }
 
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background
-            ) {
-                val navController = rememberNavController()
-                val snackbarHostState = remember { SnackbarHostState() }
-
-                NavHost(
-                    navController = navController,
-                    startDestination = if (isLoggedIn) "dashboard" else "login"
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
                 ) {
-                    composable("login") {
-                        LoginScreen(
-                            onLogin = { email, pass ->
-                                viewModel.login(email, pass) { token ->
-                                    scope.launch { dataStore.edit { it[tokenKey] = token } }
-                                    navController.navigate("dashboard") {
-                                        popUpTo("login") { inclusive = true }
-                                    }
-                                }
-                            },
-                            onNavigateToRegister = { navController.navigate("register") },
-                            snackbarHostState = snackbarHostState
-                        )
-                    }
+                    val navController = rememberNavController()
+                    val snackbarHostState = remember { SnackbarHostState() }
 
-                    composable("register") {
-                        RegisterScreen(
-                            onRegister = { name, email, pass, role ->
-                                viewModel.register(name, email, pass, role) {
-                                    navController.navigate("login") {
-                                        popUpTo("register") { inclusive = true }
+                    NavHost(
+                        navController = navController,
+                        startDestination = if (isLoggedIn) "dashboard" else "login"
+                    ) {
+                        composable("login") {
+                            LoginScreen(
+                                onLogin = { email, pass ->
+                                    viewModel.login(email, pass) { token ->
+                                        scope.launch { dataStore.edit { it[tokenKey] = token } }
+                                        navController.navigate("dashboard") {
+                                            popUpTo("login") { inclusive = true }
+                                        }
                                     }
+                                },
+                                onNavigateToRegister = { navController.navigate("register") },
+                                snackbarHostState = snackbarHostState
+                            )
+                        }
+
+                        composable("register") {
+                            RegisterScreen(
+                                onRegister = { name, email, pass, role ->
+                                    viewModel.register(name, email, pass, role) {
+                                        navController.navigate("login") {
+                                            popUpTo("register") { inclusive = true }
+                                        }
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar("Registration successful!")
+                                        }
+                                    }
+                                },
+                                onNavigateToLogin = { navController.navigate("login") },
+                                snackbarHostState = snackbarHostState
+                            )
+                        }
+
+                        composable("dashboard") {
+                            DashboardScreen(
+                                user = userProfile,
+                                adherence = adherenceSummary,
+                                onNavigateToDevices = { navController.navigate("devices") },
+                                onNavigateToSchedules = { navController.navigate("schedules") },
+                                onNavigateToMedlogs = { navController.navigate("medlogs") },
+                                onNavigateToAddMeds = {
+                                    scheduleToEdit = null
+                                    navController.navigate("add_meds")
+                                },
+                                onLogout = {
                                     scope.launch {
-                                        snackbarHostState.showSnackbar("Registration successful!")
+                                        dataStore.edit { it.remove(tokenKey) }
+                                        viewModel.logout()
+                                        navController.navigate("login") {
+                                            popUpTo("dashboard") { inclusive = true }
+                                        }
                                     }
                                 }
-                            },
-                            onNavigateToLogin = { navController.navigate("login") },
-                            snackbarHostState = snackbarHostState
-                        )
-                    }
+                            )
+                        }
 
-                    composable("dashboard") {
-                        DashboardScreen(
-                            user = userProfile,
-                            adherence = adherenceSummary,
-                            onNavigateToDevices = { navController.navigate("devices") },
-                            onNavigateToSchedules = { navController.navigate("schedules") },
-                            onNavigateToMedlogs = { navController.navigate("medlogs") },
-                            onNavigateToAddMeds = {
-                                scheduleToEdit = null
-                                navController.navigate("add_meds")
-                            },
-                            onLogout = {
-                                scope.launch {
-                                    dataStore.edit { it.remove(tokenKey) }
-                                    viewModel.logout()
-                                    navController.navigate("login") {
-                                        popUpTo("dashboard") { inclusive = true }
+                        composable("devices") {
+                            val devicesList by viewModel.devices.collectAsState()
+                            DeviceListScreen(
+                                devices = devicesList,
+                                onDeviceClick = { /* handle device click */ }
+                            )
+                        }
+
+                        composable("schedules") {
+                            val schedules by viewModel.schedules.collectAsState()
+                            ScheduleScreen(
+                                schedules = schedules,
+                                onBack = { navController.popBackStack() },
+                                onRefresh = { viewModel.refreshDashboard() },
+                                onEdit = { schedule ->
+                                    scheduleToEdit = schedule
+                                    navController.navigate("add_meds")
+                                },
+                                onDelete = { scheduleId -> viewModel.deleteSchedule(scheduleId) }
+                            )
+                        }
+
+                        composable("medlogs") {
+                            val logs by viewModel.medlogs.collectAsState()
+                            MedicationLogsScreen(
+                                logs = logs,
+                                onBack = { navController.popBackStack() },
+                                onRefresh = { viewModel.refreshDashboard() }
+                            )
+                        }
+
+                        composable("add_meds") {
+                            AddMedicationScreen(
+                                initialSchedule = scheduleToEdit,
+                                onBack = { navController.popBackStack() },
+                                onSave = { name, time, repeat ->
+                                    if (scheduleToEdit == null) {
+                                        viewModel.createSchedule(name, time, repeat) {
+                                            navController.popBackStack()
+                                            viewModel.refreshDashboard()
+                                        }
+                                    } else {
+                                        viewModel.updateSchedule(scheduleToEdit!!.id, name, time, repeat) {
+                                            navController.popBackStack()
+                                            viewModel.refreshDashboard()
+                                        }
                                     }
                                 }
-                            }
-                        )
-                    }
-
-                    composable("devices") {
-                        val devicesList by viewModel.devices.collectAsState()
-                        DeviceListScreen(
-                            devices = devicesList,
-                            onDeviceClick = { /* handle device click */ }
-                        )
-                    }
-
-                    composable("schedules") {
-                        val schedules by viewModel.schedules.collectAsState()
-                        ScheduleScreen(
-                            schedules = schedules,
-                            onBack = { navController.popBackStack() },
-                            onRefresh = { viewModel.refreshDashboard() },
-                            onEdit = { schedule ->
-                                scheduleToEdit = schedule
-                                navController.navigate("add_meds")
-                            },
-                            onDelete = { scheduleId -> viewModel.deleteSchedule(scheduleId) }
-                        )
-                    }
-
-                    composable("medlogs") {
-                        val logs by viewModel.medlogs.collectAsState()
-                        MedicationLogsScreen(
-                            logs = logs,
-                            onBack = { navController.popBackStack() },
-                            onRefresh = { viewModel.refreshDashboard() }
-                        )
-                    }
-
-                    composable("add_meds") {
-                        AddMedicationScreen(
-                            initialSchedule = scheduleToEdit,
-                            onBack = { navController.popBackStack() },
-                            onSave = { name, time, repeat ->
-                                if (scheduleToEdit == null) {
-                                    viewModel.createSchedule(name, time, repeat) {
-                                        navController.popBackStack()
-                                        viewModel.refreshDashboard()
-                                    }
-                                } else {
-                                    viewModel.updateSchedule(scheduleToEdit!!.id, name, time, repeat) {
-                                        navController.popBackStack()
-                                        viewModel.refreshDashboard()
-                                    }
-                                }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }

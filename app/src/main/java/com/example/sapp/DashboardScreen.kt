@@ -1,20 +1,20 @@
 package com.example.sapp.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.shape.CircleShape
 import com.example.sapp.data.model.AdherenceSummaryResponse
 import com.example.sapp.data.model.UserOut
 import java.text.SimpleDateFormat
@@ -31,13 +31,12 @@ fun DashboardScreen(
     onNavigateToAddMeds: () -> Unit,
     onLogout: () -> Unit
 ) {
-    // Format: "Monday, 08 February 2026"
     val currentDate = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault()).format(Date())
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("SApp Health", fontWeight = FontWeight.Bold) },
+            CenterAlignedTopAppBar(
+                title = { Text("SApp Health", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { /* TODO: Navigate to Profile Screen */ }) {
                         Icon(Icons.Default.AccountCircle, contentDescription = "Profile")
@@ -54,56 +53,53 @@ fun DashboardScreen(
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             // Header Section
-            Text(
-                text = "Welcome back,",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = user?.name ?: "Loading...",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            Text(
-                text = currentDate,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "Welcome back,",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = user?.name ?: "Loading...",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = currentDate,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
 
             // Adherence Section
             AdherenceOverview(adherence)
 
-            Spacer(Modifier.height(32.dp))
-
             Text(
                 text = "Services",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 16.dp)
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+
+            val dashboardItems = listOf(
+                DashboardItem("My Devices", Icons.Default.Devices, MaterialTheme.colorScheme.primary, onNavigateToDevices),
+                DashboardItem("Schedules", Icons.Default.Schedule, MaterialTheme.colorScheme.tertiary, onNavigateToSchedules),
+                DashboardItem("Medlogs", Icons.Default.History, MaterialTheme.colorScheme.secondary, onNavigateToMedlogs),
+                DashboardItem("Add Meds", Icons.Default.AddCircle, MaterialTheme.colorScheme.errorContainer, onNavigateToAddMeds)
             )
 
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxHeight()
             ) {
-                item {
-                    DashboardCard("My Devices", Icons.Default.Devices, MaterialTheme.colorScheme.primary, onNavigateToDevices)
-                }
-                item {
-                    DashboardCard("Schedules", Icons.Default.Schedule, MaterialTheme.colorScheme.tertiary, onNavigateToSchedules)
-                }
-                item {
-                    DashboardCard("Medlogs", Icons.Default.History, MaterialTheme.colorScheme.secondary, onNavigateToMedlogs)
-                }
-                item {
-                    DashboardCard("Add Meds", Icons.Default.AddCircle, MaterialTheme.colorScheme.errorContainer, onNavigateToAddMeds)
+                items(dashboardItems) { item ->
+                    DashboardCard(item)
                 }
             }
         }
@@ -112,6 +108,13 @@ fun DashboardScreen(
 
 @Composable
 fun AdherenceOverview(adherence: AdherenceSummaryResponse?) {
+    val weeklyAvg = adherence?.weekly_adherence?.toFloat() ?: 0f
+    val adherenceColor = when {
+        weeklyAvg >= 0.8f -> MaterialTheme.colorScheme.primary
+        weeklyAvg >= 0.5f -> MaterialTheme.colorScheme.tertiary
+        else -> MaterialTheme.colorScheme.error
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
@@ -122,13 +125,13 @@ fun AdherenceOverview(adherence: AdherenceSummaryResponse?) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Circular Progress
-            val weeklyAvg = adherence?.weekly_adherence?.toFloat() ?: 0f
             Box(contentAlignment = Alignment.Center, modifier = Modifier.size(90.dp)) {
                 CircularProgressIndicator(
-                    progress = { weeklyAvg },
+                    progress = weeklyAvg,
                     modifier = Modifier.fillMaxSize(),
                     strokeWidth = 10.dp,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    color = adherenceColor,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
@@ -164,15 +167,22 @@ fun InfoRow(icon: ImageVector, label: String, value: String) {
     }
 }
 
+data class DashboardItem(
+    val title: String,
+    val icon: ImageVector,
+    val color: Color,
+    val onClick: () -> Unit
+)
+
 @Composable
-fun DashboardCard(title: String, icon: ImageVector, color: androidx.compose.ui.graphics.Color, onClick: () -> Unit) {
+fun DashboardCard(item: DashboardItem) {
     Surface(
-        onClick = onClick,
+        onClick = item.onClick,
         modifier = Modifier.height(110.dp),
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 1.dp,
-        shadowElevation = 2.dp
+        tonalElevation = 2.dp,
+        shadowElevation = 4.dp
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -180,19 +190,19 @@ fun DashboardCard(title: String, icon: ImageVector, color: androidx.compose.ui.g
             verticalArrangement = Arrangement.Center
         ) {
             Surface(
-                color = color.copy(alpha = 0.1f),
+                color = item.color.copy(alpha = 0.1f),
                 shape = CircleShape,
                 modifier = Modifier.size(48.dp)
             ) {
                 Icon(
-                    icon,
+                    item.icon,
                     contentDescription = null,
-                    tint = color,
+                    tint = item.color,
                     modifier = Modifier.padding(12.dp)
                 )
             }
             Spacer(Modifier.height(8.dp))
-            Text(title, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
+            Text(item.title, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
         }
     }
 }
