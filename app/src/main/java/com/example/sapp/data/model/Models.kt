@@ -100,15 +100,6 @@ data class MedlogOut(
     val device_id: String
 )
 
-// 5. Notifications
-data class NotificationOut(
-    val id: UUID,
-    val message: String,
-    val device_id: String,
-    val user_id: UUID,
-    val created_at: String
-)
-
 data class MessageResponse(val message: String)
 
 // FCM Token registration

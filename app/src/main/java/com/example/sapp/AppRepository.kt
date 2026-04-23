@@ -32,10 +32,6 @@ class AppRepository(private val apiService: ApiService) {
 
     suspend fun getMedlogs(userId: UUID) = apiService.getMedlogs(userId)
 
-    suspend fun getNotifications(userId: UUID): List<NotificationOut> {
-        return apiService.getNotifications(userId)
-    }
-
     suspend fun registerToken(userId: UUID, token: String) =
         apiService.registerToken(TokenRegisterRequest(userId, token))
 }
