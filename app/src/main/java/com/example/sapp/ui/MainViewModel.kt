@@ -1,23 +1,43 @@
 package com.example.sapp.ui
 
+import android.content.Context
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sapp.data.model.*
 import com.example.sapp.data.repository.AppRepository
+import com.example.sapp.data.local.dataStore
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-class MainViewModel(private val repository: AppRepository) : ViewModel() {
+sealed class AuthState {
+    object Idle : AuthState()
+    object Loading : AuthState()
+    data class Success(val token: String) : AuthState()
+    data class Error(val message: String) : AuthState()
+}
+
+class MainViewModel(
+    private val repository: AppRepository,
+    private val context: Context
+) : ViewModel() {
+
     val devices = MutableStateFlow<List<DeviceOut>>(emptyList())
     val schedules = MutableStateFlow<List<ScheduleOut>>(emptyList())
     val medlogs = MutableStateFlow<List<MedlogOut>>(emptyList())
-    val loginSuccess = MutableStateFlow(false)
     val userProfile = MutableStateFlow<UserOut?>(null)
     val adherenceSummary = MutableStateFlow<AdherenceSummaryResponse?>(null)
     val errorMessage = MutableStateFlow<String?>(null)
 
+    private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
+    val authState: StateFlow<AuthState> = _authState
+
     private var currentUserId: UUID? = null
+    private val tokenKey = stringPreferencesKey("jwt_token")
 
     init {
         checkSession()
@@ -27,70 +47,76 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
         viewModelScope.launch {
             try {
                 val meResponse = repository.getMe()
-                val userId = meResponse.user_id
-                currentUserId = userId
-                loginSuccess.value = true
+                currentUserId = meResponse.user_id
+                _authState.value = AuthState.Success("existing-token") // placeholder
                 refreshDashboard()
             } catch (e: Exception) {
-                // Session not valid or not present
-                loginSuccess.value = false
+                _authState.value = AuthState.Idle
             }
         }
     }
 
-    fun register(name: String, email: String, pass: String, role: String, onSuccess: () -> Unit) {
+    fun login(email: String, pass: String) {
         viewModelScope.launch {
-            try {
-                val response = repository.register(name, email, pass, role)
-                if (response.isSuccessful) {
-                    onSuccess()
-                } else {
-                    errorMessage.value = "Registration failed: ${response.code()}"
-                }
-            } catch (e: Exception) {
-                errorMessage.value = e.localizedMessage
-            }
-        }
-    }
-
-    fun login(email: String, pass: String, onTokenReceived: suspend (String) -> Unit) {
-        viewModelScope.launch {
+            _authState.value = AuthState.Loading
             try {
                 val response = repository.login(email, pass)
                 if (response.isSuccessful) {
                     response.body()?.access_token?.let { token ->
-                        onTokenReceived(token)
-                        
+                        // Save token to DataStore
+                        context.dataStore.edit { it[tokenKey] = token }
+
                         try {
                             val meResponse = repository.getMe()
-                            val userId = meResponse.user_id
-                            currentUserId = userId
-                            loginSuccess.value = true
-                            
+                            currentUserId = meResponse.user_id
+                            _authState.value = AuthState.Success(token)
                             refreshDashboard()
                         } catch (e: Exception) {
-                            errorMessage.value = "Login successful but failed to get user ID: ${e.message}"
+                            _authState.value = AuthState.Error("Login successful but failed to get user ID: ${e.message}")
                         }
+                    } ?: run {
+                        _authState.value = AuthState.Error("No token received")
                     }
                 } else {
-                    errorMessage.value = "Login failed. Check credentials."
+                    _authState.value = AuthState.Error("Login failed. Check credentials.")
                 }
             } catch (e: Exception) {
-                errorMessage.value = e.localizedMessage
+                _authState.value = AuthState.Error(e.localizedMessage ?: "Unknown error")
             }
         }
     }
+
+    fun register(name: String, email: String, pass: String, role: String) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            try {
+                val response = repository.register(name, email, pass, role)
+                if (response.isSuccessful) {
+                    _authState.value = AuthState.Success("registered")
+                } else {
+                    _authState.value = AuthState.Error("Registration failed: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.localizedMessage ?: "Unknown error")
+            }
+        }
+    }
+
 
     fun registerFcmToken(token: String) {
         val userId = currentUserId ?: return
         viewModelScope.launch {
             try {
-                repository.registerToken(userId, token)
+                val response = repository.registerToken(userId, token)
+                if (!response.isSuccessful) {
+                    errorMessage.value = "Failed to register FCM token: ${response.code()}"
+                }
             } catch (e: Exception) {
-                // Silently fail or log
+                errorMessage.value = "Error registering FCM token: ${e.localizedMessage}"
             }
         }
     }
+
 
     fun loadUserProfile(userId: UUID) {
         viewModelScope.launch {
@@ -146,7 +172,7 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     fun createSchedule(pillname: String, doseTime: String, repeatDays: Int, onSuccess: () -> Unit) {
         val userId = currentUserId ?: return
         val deviceId = devices.value.firstOrNull()?.chip_id ?: "DEFAULT_CHIP"
-        
+
         viewModelScope.launch {
             try {
                 val request = ScheduleRequest(
@@ -172,7 +198,7 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
                 update["pillname"] = pillname
                 update["dose_time"] = doseTime
                 update["repeat_days"] = repeatDays
-                
+
                 repository.updateSchedule(scheduleId, update)
                 refreshDashboard()
                 onSuccess()
@@ -198,7 +224,7 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
     }
 
     fun refreshDashboard() {
-        currentUserId?.let { 
+        currentUserId?.let {
             loadUserProfile(it)
             loadDevices(it)
             loadAdherenceSummary(it)
@@ -209,7 +235,7 @@ class MainViewModel(private val repository: AppRepository) : ViewModel() {
 
     fun logout() {
         currentUserId = null
-        loginSuccess.value = false
+        _authState.value = AuthState.Idle
         userProfile.value = null
         devices.value = emptyList()
         schedules.value = emptyList()
