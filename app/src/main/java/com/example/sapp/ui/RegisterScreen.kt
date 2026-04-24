@@ -9,11 +9,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
+    viewModel: MainViewModel,
+    navController: NavController,
     onRegister: (String, String, String, String) -> Unit,
     onNavigateToLogin: () -> Unit,
     snackbarHostState: SnackbarHostState
@@ -24,6 +27,23 @@ fun RegisterScreen(
     var role by remember { mutableStateOf("patient") }
     var expanded by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+
+    val authState by viewModel.authState.collectAsState()
+
+    LaunchedEffect(authState) {
+        when (authState) {
+            is AuthState.Success -> {
+                navController.navigate("login") {
+                    popUpTo("register") { inclusive = true }
+                }
+                snackbarHostState.showSnackbar("Registration successful!")
+            }
+            is AuthState.Error -> {
+                snackbarHostState.showSnackbar((authState as AuthState.Error).message)
+            }
+            else -> Unit
+        }
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
