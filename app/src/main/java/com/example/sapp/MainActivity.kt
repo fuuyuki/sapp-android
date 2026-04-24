@@ -20,7 +20,6 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.firebase.messaging.FirebaseMessaging
 import com.example.sapp.data.model.ScheduleOut
 import com.example.sapp.data.network.RetrofitClient
-import com.example.sapp.data.network.dataStore
 import com.example.sapp.data.repository.AppRepository
 import com.example.sapp.ui.*
 import com.example.sapp.ui.LoginScreen
@@ -42,20 +41,20 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val apiService = RetrofitClient.getApiService(this)
         val repository = AppRepository(apiService)
-        val viewModel = MainViewModel(repository)
+        val viewModel = MainViewModel(repository, this)
 
         setContent {
             MedicalAppTheme{
-                val isLoggedIn by viewModel.loginSuccess.collectAsState()
+                val authState by viewModel.authState.collectAsState()
                 val userProfile by viewModel.userProfile.collectAsState()
                 val adherenceSummary by viewModel.adherenceSummary.collectAsState()
                 val errorMessage by viewModel.errorMessage.collectAsState()
                 val scope = rememberCoroutineScope()
                 val context = LocalContext.current
-
-                var currentScreen by remember { mutableStateOf("login") }
-                var currentSubScreen by remember { mutableStateOf("dashboard") }
                 var scheduleToEdit by remember { mutableStateOf<ScheduleOut?>(null) }
+
+                val navController = rememberNavController()
+                val snackbarHostState = remember { SnackbarHostState() }
 
                 // Permission handling for Android 13+
                 val permissionLauncher = rememberLauncherForActivityResult(
@@ -77,17 +76,17 @@ class MainActivity : ComponentActivity() {
                 }
 
                 // Register FCM token once user is logged in
-                LaunchedEffect(isLoggedIn) {
-                    if (isLoggedIn) {
-                        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
-                                val token = task.result
-                                Log.d("FCM", "FCM Device Token: $token")
-                                viewModel.registerFcmToken(token)
-                            }
-                        }
-                    }
-                }
+//                LaunchedEffect(isLoggedIn) {
+//                    if (isLoggedIn) {
+//                        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+//                            if (task.isSuccessful) {
+//                                val token = task.result
+//                                Log.d("FCM", "FCM Device Token: $token")
+//                                viewModel.registerFcmToken(token)
+//                            }
+//                        }
+//                    }
+//                }
 
                 LaunchedEffect(errorMessage) {
                     errorMessage?.let {
@@ -100,23 +99,14 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val navController = rememberNavController()
-                    val snackbarHostState = remember { SnackbarHostState() }
-
                     NavHost(
                         navController = navController,
-                        startDestination = if (isLoggedIn) "dashboard" else "login"
+                        startDestination = if (authState is AuthState.Success) "dashboard" else "login"
                     ) {
                         composable("login") {
                             LoginScreen(
-                                onLogin = { email, pass ->
-                                    viewModel.login(email, pass) { token ->
-                                        scope.launch { dataStore.edit { it[tokenKey] = token } }
-                                        navController.navigate("dashboard") {
-                                            popUpTo("login") { inclusive = true }
-                                        }
-                                    }
-                                },
+                                viewModel = viewModel,
+                                navController = navController,
                                 onNavigateToRegister = { navController.navigate("register") },
                                 snackbarHostState = snackbarHostState
                             )
@@ -124,15 +114,10 @@ class MainActivity : ComponentActivity() {
 
                         composable("register") {
                             RegisterScreen(
+                                viewModel = viewModel,
+                                navController = navController,
                                 onRegister = { name, email, pass, role ->
-                                    viewModel.register(name, email, pass, role) {
-                                        navController.navigate("login") {
-                                            popUpTo("register") { inclusive = true }
-                                        }
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar("Registration successful!")
-                                        }
-                                    }
+                                    viewModel.register(name, email, pass, role)
                                 },
                                 onNavigateToLogin = { navController.navigate("login") },
                                 snackbarHostState = snackbarHostState
@@ -146,13 +131,9 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToDevices = { navController.navigate("devices") },
                                 onNavigateToSchedules = { navController.navigate("schedules") },
                                 onNavigateToMedlogs = { navController.navigate("medlogs") },
-                                onNavigateToAddMeds = {
-                                    scheduleToEdit = null
-                                    navController.navigate("add_meds")
-                                },
+                                onNavigateToAddMeds = { navController.navigate("add_meds") },
                                 onLogout = {
                                     scope.launch {
-                                        dataStore.edit { it.remove(tokenKey) }
                                         viewModel.logout()
                                         navController.navigate("login") {
                                             popUpTo("dashboard") { inclusive = true }
