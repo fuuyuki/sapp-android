@@ -8,18 +8,14 @@ import android.content.Intent
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.sapp.MainActivity
 import com.example.sapp.data.network.RetrofitClient
-import com.example.sapp.data.network.dataStore
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
 
