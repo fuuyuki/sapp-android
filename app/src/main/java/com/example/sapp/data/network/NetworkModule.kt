@@ -1,4 +1,3 @@
-// com.example.sapp.data.network.NetworkModule.kt
 package com.example.sapp.data.network
 
 import android.content.Context
@@ -12,8 +11,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-
-val Context.dataStore by preferencesDataStore(name = "settings")
+import com.example.sapp.data.local.dataStore
 
 class AuthInterceptor(private val context: Context) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): okhttp3.Response {
