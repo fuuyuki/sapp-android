@@ -1,5 +1,6 @@
 package com.example.sapp.ui
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -12,11 +13,14 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
-    onLogin: (String, String) -> Unit,
+    viewModel: MainViewModel,
+    navController: NavController,
     onNavigateToRegister: () -> Unit,
     snackbarHostState: SnackbarHostState
 ) {
@@ -24,6 +28,33 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+
+    val authState by viewModel.authState.collectAsState()
+
+    // React to auth state changes
+    LaunchedEffect(authState) {
+        when (authState) {
+            is AuthState.Success -> {
+                // ✅ Register FCM token after successful login
+                FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        val token = task.result
+                        Log.d("FCM", "FCM Device Token: $token")
+                        viewModel.registerFcmToken(token)
+                    }
+                }
+
+                // Navigate to dashboard
+                navController.navigate("dashboard") {
+                    popUpTo("login") { inclusive = true }
+                }
+            }
+            is AuthState.Error -> {
+                snackbarHostState.showSnackbar((authState as AuthState.Error).message)
+            }
+            else -> Unit
+        }
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -41,7 +72,8 @@ fun LoginScreen(
                 value = email,
                 onValueChange = { email = it },
                 label = { Text("Email") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
 
             OutlinedTextField(
@@ -68,7 +100,7 @@ fun LoginScreen(
                             snackbarHostState.showSnackbar("Please fill in all fields")
                         }
                     } else {
-                        onLogin(email, password)
+                        viewModel.login(email, password)
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
@@ -78,6 +110,10 @@ fun LoginScreen(
 
             TextButton(onClick = onNavigateToRegister) {
                 Text("Don't have an account? Register")
+            }
+
+            if (authState is AuthState.Loading) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
         }
     }
