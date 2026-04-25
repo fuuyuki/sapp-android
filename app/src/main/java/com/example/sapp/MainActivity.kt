@@ -3,7 +3,6 @@ package com.example.sapp
 import android.Manifest
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -14,10 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import com.google.firebase.messaging.FirebaseMessaging
 import com.example.sapp.data.model.ScheduleOut
 import com.example.sapp.data.network.RetrofitClient
 import com.example.sapp.data.repository.AppRepository
@@ -26,8 +22,6 @@ import com.example.sapp.ui.LoginScreen
 import com.example.sapp.ui.RegisterScreen
 import com.example.sapp.ui.DeviceListScreen
 import kotlinx.coroutines.launch
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.graphics.Color
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -35,7 +29,6 @@ import com.example.sapp.ui.theme.MedicalAppTheme
 
 
 class MainActivity : ComponentActivity() {
-    private val tokenKey = stringPreferencesKey("jwt_token")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,6 +48,7 @@ class MainActivity : ComponentActivity() {
 
                 val navController = rememberNavController()
                 val snackbarHostState = remember { SnackbarHostState() }
+                var showLogoutDialog by remember { mutableStateOf(false) }
 
                 // Permission handling for Android 13+
                 val permissionLauncher = rememberLauncherForActivityResult(
@@ -73,6 +67,21 @@ class MainActivity : ComponentActivity() {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
+                }
+
+                if (showLogoutDialog) {
+                    LogoutConfirmationDialog(
+                        onConfirm = {
+                            showLogoutDialog = false
+                            // Actual logout logic here
+                            viewModel.logout()
+                            // Navigate back to login screen
+                            navController.navigate("login") {
+                                popUpTo("dashboard") { inclusive = true }
+                            }
+                        },
+                        onDismiss = { showLogoutDialog = false }
+                    )
                 }
 
                 // Register FCM token once user is logged in
@@ -130,12 +139,7 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToMedlogs = { navController.navigate("medlogs") },
                                 onNavigateToAddMeds = { navController.navigate("add_meds") },
                                 onLogout = {
-                                    scope.launch {
-                                        viewModel.logout()
-                                        navController.navigate("login") {
-                                            popUpTo("dashboard") { inclusive = true }
-                                        }
-                                    }
+                                    showLogoutDialog = true
                                 }
                             )
                         }
@@ -199,22 +203,25 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-@OptIn(ExperimentalMaterial3Api::class)
-
 @Composable
-fun StatusBadge(status: String) {
-    val color = if (status.lowercase() == "online") Color(0xFF4CAF50) else Color.Gray
-    Surface(
-        color = color.copy(alpha = 0.1f),
-        shape = CircleShape,
-        border = androidx.compose.foundation.BorderStroke(1.dp, color)
-    ) {
-        Text(
-            text = status.uppercase(),
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-            style = MaterialTheme.typography.labelSmall,
-            color = color
-        )
-    }
+fun LogoutConfirmationDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Logout Confirmation") },
+        text = { Text("Are you sure you want to logout?") },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("Yes")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Keep Login")
+            }
+        }
+    )
 }
+
