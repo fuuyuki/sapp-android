@@ -13,7 +13,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.sapp.data.model.ScheduleOut
 import com.example.sapp.data.network.RetrofitClient
 import com.example.sapp.data.repository.AppRepository
@@ -21,10 +20,10 @@ import com.example.sapp.ui.*
 import com.example.sapp.ui.LoginScreen
 import com.example.sapp.ui.RegisterScreen
 import com.example.sapp.ui.DeviceListScreen
-import kotlinx.coroutines.launch
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.sapp.ui.state.AuthState
 import com.example.sapp.ui.theme.MedicalAppTheme
 
 
@@ -83,19 +82,6 @@ class MainActivity : ComponentActivity() {
                         onDismiss = { showLogoutDialog = false }
                     )
                 }
-
-                // Register FCM token once user is logged in
-//                LaunchedEffect(isLoggedIn) {
-//                    if (isLoggedIn) {
-//                        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-//                            if (task.isSuccessful) {
-//                                val token = task.result
-//                                Log.d("FCM", "FCM Device Token: $token")
-//                                viewModel.registerFcmToken(token)
-//                            }
-//                        }
-//                    }
-//                }
 
                 LaunchedEffect(errorMessage) {
                     errorMessage?.let {
