@@ -1,18 +1,25 @@
 package com.example.sapp.ui
 
+import android.app.Activity
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.unit.dp
 import com.example.sapp.data.model.AdherenceSummaryResponse
 import com.example.sapp.data.model.UserOut
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -28,8 +35,30 @@ fun DashboardScreen(
     onLogout: () -> Unit
 ) {
     val currentDate = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault()).format(Date())
+    val context = LocalContext.current
+    var backPressedOnce by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Intercept back press
+    BackHandler {
+        if (backPressedOnce) {
+            (context as? Activity)?.finish()
+        } else {
+            backPressedOnce = true
+            scope.launch {
+                snackbarHostState.showSnackbar("Press back again to exit")
+            }
+            // Reset flag after 2 seconds
+            scope.launch {
+                delay(2000)
+                backPressedOnce = false
+            }
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -105,6 +134,7 @@ fun DashboardScreen(
         }
     }
 }
+
 
 @Composable
 fun WelcomeBanner(user: UserOut?, currentDate: String) {
