@@ -6,6 +6,8 @@ sealed class AuthState {
     object Loading : AuthState()
     object LoggingIn : AuthState()
     data class Error(val message: String) : AuthState()
+    data class LoginSuccess(val token: String) : AuthState()
     object Success : AuthState()        // credentials accepted
     object SessionReady : AuthState()   // FCM token registered, user data loaded
+    object RegistrationSuccess : AuthState()
 }

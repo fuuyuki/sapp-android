@@ -37,10 +37,10 @@ fun LoginScreen(
 
     val authState by viewModel.authState.collectAsState()
 
-    // React to auth state changes
+    // React to auth state changes (LoginState)
     LaunchedEffect(authState) {
         when (authState) {
-            is AuthState.Success -> {
+            is AuthState.LoginSuccess -> {
                 FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         val token = task.result
@@ -50,7 +50,7 @@ fun LoginScreen(
                     }
                 }
             }
-            is AuthState.SessionReady -> {
+            AuthState.SessionReady -> {
                 navController.navigate("dashboard") {
                     popUpTo("login") { inclusive = true }
                 }
@@ -61,6 +61,7 @@ fun LoginScreen(
             else -> Unit
         }
     }
+
 
 
     Scaffold(
@@ -78,7 +79,7 @@ fun LoginScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CircularProgressIndicator()
                         Spacer(Modifier.height(16.dp))
-                        Text("Logging In...", style = MaterialTheme.typography.bodyMedium)
+                        Text("Checking Session...", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }

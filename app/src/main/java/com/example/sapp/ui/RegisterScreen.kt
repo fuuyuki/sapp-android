@@ -38,15 +38,19 @@ fun RegisterScreen(
     val scope = rememberCoroutineScope()
     val authState by viewModel.authState.collectAsState()
 
-    // React to auth state changes
+    // React to auth state changes (RegistrationState)
     LaunchedEffect(authState) {
         when (authState) {
-            AuthState.Success -> {
-                navController.navigate("login") {
-                    popUpTo("register") { inclusive = true }
-                }
+            AuthState.RegistrationSuccess -> {
                 scope.launch {
-                    snackbarHostState.showSnackbar("Registration successful! Please log in.")
+                    val result = snackbarHostState.showSnackbar(
+                        message = "Registration successful! Please log in."
+                    )
+                    if (result == SnackbarResult.Dismissed || result == SnackbarResult.ActionPerformed) {
+                        navController.navigate("login") {
+                            popUpTo("register") { inclusive = true }
+                        }
+                    }
                 }
             }
             is AuthState.Error -> {
@@ -55,7 +59,6 @@ fun RegisterScreen(
             else -> Unit
         }
     }
-
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -159,7 +162,7 @@ fun RegisterScreen(
             }
 
             if (authState is AuthState.Loading) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                CircularProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
         }
     }

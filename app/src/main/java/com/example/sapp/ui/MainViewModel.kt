@@ -95,7 +95,7 @@ class MainViewModel(
             try {
                 val response = repository.register(name, email, pass, role)
                 if (response.isSuccessful) {
-                    _authState.value = AuthState.Success
+                    _authState.value = AuthState.RegistrationSuccess
                 } else {
                     _authState.value = AuthState.Error("Registration failed: ${response.code()}")
                 }
