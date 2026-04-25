@@ -1,7 +1,6 @@
 package com.example.sapp.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -14,11 +13,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.sapp.data.model.ScheduleOut
 import java.util.Calendar
@@ -34,26 +30,19 @@ fun AddMedicationScreen(
     var showTimePicker by remember { mutableStateOf(false) }
 
     val calendar = Calendar.getInstance()
-    
-    val initialHour = initialSchedule?.dose_time?.substringAfter("T")?.substringBefore(":")?.toIntOrNull() 
+    val initialHour = initialSchedule?.dose_time?.substringAfter("T")?.substringBefore(":")?.toIntOrNull()
         ?: calendar.get(Calendar.HOUR_OF_DAY)
     val initialMinute = initialSchedule?.dose_time?.substringAfter(":")?.substringBefore(":")?.toIntOrNull()
         ?: calendar.get(Calendar.MINUTE)
 
-    val timePickerState = rememberTimePickerState(
-        initialHour = initialHour,
-        initialMinute = initialMinute
-    )
+    val timePickerState = rememberTimePickerState(initialHour, initialMinute)
 
     val formattedTime = remember(timePickerState.hour, timePickerState.minute) {
-        val h = timePickerState.hour.toString().padStart(2, '0')
-        val m = timePickerState.minute.toString().padStart(2, '0')
-        "$h:$m"
+        "%02d:%02d".format(timePickerState.hour, timePickerState.minute)
     }
 
-    // Days of week selector - Improved labels
     val daysOfWeek = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
-    val selectedDays = remember { 
+    val selectedDays = remember {
         mutableStateListOf<Int>().apply {
             initialSchedule?.repeat_days?.let { repeatDays ->
                 daysOfWeek.indices.forEach { i ->
@@ -65,13 +54,25 @@ fun AddMedicationScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(if (initialSchedule == null) "Add Medication" else "Update Medication", fontWeight = FontWeight.Bold) },
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        if (initialSchedule == null) "Add Medication" else "Edit Medication",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onPrimary)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                )
             )
         }
     ) { padding ->
@@ -82,18 +83,16 @@ fun AddMedicationScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Pill Name Input
             OutlinedTextField(
                 value = pillName,
                 onValueChange = { pillName = it },
-                label = { Text("Pill Name") },
+                label = { Text("Medication Name") },
                 placeholder = { Text("e.g. Paracetamol") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
                 singleLine = true
             )
 
-            // Time Selection Trigger
+            // Time Picker Trigger
             OutlinedTextField(
                 value = formattedTime,
                 onValueChange = {},
@@ -103,62 +102,46 @@ fun AddMedicationScreen(
                     .fillMaxWidth()
                     .clickable { showTimePicker = true },
                 enabled = false,
+                leadingIcon = { Icon(Icons.Default.AccessTime, contentDescription = null) },
                 colors = OutlinedTextFieldDefaults.colors(
                     disabledTextColor = MaterialTheme.colorScheme.onSurface,
                     disabledBorderColor = MaterialTheme.colorScheme.outline,
-                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    disabledLeadingIconColor = MaterialTheme.colorScheme.primary
-                ),
-                leadingIcon = { Icon(Icons.Default.AccessTime, contentDescription = null) }
+                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             )
 
-            // Days Selector Section
+            // Days Selector
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
                     "Repeat on Days",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
                 )
-
-                // Using Weight(1f) ensures all 7 items fit perfectly regardless of screen width
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     daysOfWeek.forEachIndexed { index, day ->
                         val isSelected = selectedDays.contains(index)
-
-                        // Custom Round Day Toggle
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .aspectRatio(1f) // Makes it a perfect circle
-                                .padding(2.dp)
-                                .clickable(
-                                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                                    indication = null // Remove ripple for cleaner look
-                                ) {
-                                    if (isSelected) selectedDays.remove(index)
-                                    else selectedDays.add(index)
+                                .aspectRatio(1f)
+                                .clickable {
+                                    if (isSelected) selectedDays.remove(index) else selectedDays.add(index)
                                 }
                                 .background(
-                                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                    shape = CircleShape
-                                )
-                                .border(
-                                    width = 1.dp,
-                                    color = if (isSelected) Color.Transparent else MaterialTheme.colorScheme.outlineVariant,
-                                    shape = CircleShape
+                                    if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                    CircleShape
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = day.take(1), // Show only first letter (S, M, T, W...)
+                                text = day.take(1),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                                textAlign = TextAlign.Center
+                                color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
@@ -174,33 +157,26 @@ fun AddMedicationScreen(
                     selectedDays.forEach { repeatDaysDecimal += (1 shl it) }
                     onSave(pillName, doseTime, repeatDaysDecimal)
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                enabled = pillName.isNotBlank() && selectedDays.isNotEmpty(),
-                shape = MaterialTheme.shapes.medium
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                enabled = pillName.isNotBlank() && selectedDays.isNotEmpty()
             ) {
-                Text(if (initialSchedule == null) "Save Medication" else "Update Medication", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    if (initialSchedule == null) "Save Medication" else "Update Medication",
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+                )
             }
         }
     }
 
-    // Time Picker Dialog Logic
     if (showTimePicker) {
         Dialog(onDismissRequest = { showTimePicker = false }) {
-            Surface(
-                shape = MaterialTheme.shapes.extraLarge,
-                tonalElevation = 6.dp
-            ) {
+            Surface(shape = MaterialTheme.shapes.extraLarge, tonalElevation = 6.dp) {
                 Column(
                     modifier = Modifier.padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "Set Time",
-                        style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp)
-                    )
+                    Text("Select Dose Time", style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(16.dp))
                     TimePicker(state = timePickerState)
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
@@ -214,3 +190,4 @@ fun AddMedicationScreen(
         }
     }
 }
+
