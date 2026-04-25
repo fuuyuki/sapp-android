@@ -116,9 +116,6 @@ class MainActivity : ComponentActivity() {
                             RegisterScreen(
                                 viewModel = viewModel,
                                 navController = navController,
-                                onRegister = { name, email, pass, role ->
-                                    viewModel.register(name, email, pass, role)
-                                },
                                 onNavigateToLogin = { navController.navigate("login") },
                                 snackbarHostState = snackbarHostState
                             )
