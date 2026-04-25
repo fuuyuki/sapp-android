@@ -16,7 +16,8 @@ import java.util.UUID
 
 sealed class AuthState {
     object Idle : AuthState()
-    object Loading : AuthState()
+    object Loading : AuthState()        // startup session check
+    object LoggingIn : AuthState()      // user pressed login
     data class Success(val token: String) : AuthState()
     data class Error(val message: String) : AuthState()
 }
@@ -45,6 +46,7 @@ class MainViewModel(
 
     fun checkSession() {
         viewModelScope.launch {
+            _authState.value = AuthState.Loading   // show loading immediately
             try {
                 val meResponse = repository.getMe()
                 currentUserId = meResponse.user_id
