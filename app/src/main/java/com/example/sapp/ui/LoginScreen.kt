@@ -3,19 +3,24 @@ package com.example.sapp.ui
 import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.Image
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.launch
+import com.example.sapp.R
 
 @Composable
 fun LoginScreen(
@@ -35,7 +40,6 @@ fun LoginScreen(
     LaunchedEffect(authState) {
         when (authState) {
             is AuthState.Success -> {
-                // ✅ Register FCM token after successful login
                 FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         val token = task.result
@@ -43,8 +47,6 @@ fun LoginScreen(
                         viewModel.registerFcmToken(token)
                     }
                 }
-
-                // Navigate to dashboard
                 navController.navigate("dashboard") {
                     popUpTo("login") { inclusive = true }
                 }
@@ -62,16 +64,24 @@ fun LoginScreen(
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(16.dp)
+                .padding(24.dp)
                 .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Login", style = MaterialTheme.typography.headlineMedium)
+            Image(
+                painter = painterResource(id = R.drawable.ic_pill),
+                contentDescription = "App Logo",
+                modifier = Modifier.size(96.dp)
+            )
+
+            Text("Welcome Back", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+            Text("Please sign in to continue", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("Email") },
+                label = { Text("Email Address") },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
@@ -105,11 +115,11 @@ fun LoginScreen(
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Login")
+                Text("Sign In")
             }
 
             TextButton(onClick = onNavigateToRegister) {
-                Text("Don't have an account? Register")
+                Text("Don’t have an account? Sign Up")
             }
 
             if (authState is AuthState.Loading) {
@@ -118,3 +128,4 @@ fun LoginScreen(
         }
     }
 }
+

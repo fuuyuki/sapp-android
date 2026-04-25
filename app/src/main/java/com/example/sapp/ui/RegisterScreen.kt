@@ -2,41 +2,53 @@ package com.example.sapp.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.Image
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
+import com.example.sapp.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
     viewModel: MainViewModel,
     navController: NavController,
-    onRegister: (String, String, String, String) -> Unit,
     onNavigateToLogin: () -> Unit,
     snackbarHostState: SnackbarHostState
 ) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var role by remember { mutableStateOf("patient") }
-    var expanded by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
+    var passwordVisible by remember { mutableStateOf(false) }
+    var role by remember { mutableStateOf("patient") } // default role
 
+    val scope = rememberCoroutineScope()
     val authState by viewModel.authState.collectAsState()
 
+    // React to auth state changes
     LaunchedEffect(authState) {
         when (authState) {
             is AuthState.Success -> {
+                // Registration success → navigate back to login
                 navController.navigate("login") {
                     popUpTo("register") { inclusive = true }
                 }
-                snackbarHostState.showSnackbar("Registration successful!")
+                scope.launch {
+                    snackbarHostState.showSnackbar("Registration successful! Please log in.")
+                }
             }
             is AuthState.Error -> {
                 snackbarHostState.showSnackbar((authState as AuthState.Error).message)
@@ -51,11 +63,20 @@ fun RegisterScreen(
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(16.dp)
+                .padding(24.dp)
                 .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Register", style = MaterialTheme.typography.headlineMedium)
+            // ✅ Logo image
+            Image(
+                painter = painterResource(id = R.drawable.ic_pill),
+                contentDescription = "App Logo",
+                modifier = Modifier.size(96.dp)
+            )
+
+            Text("Create Account", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+            Text("Please fill in the details to register", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
             OutlinedTextField(
                 value = name,
@@ -67,7 +88,7 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("Email") },
+                label = { Text("Email Address") },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
@@ -77,10 +98,20 @@ fun RegisterScreen(
                 onValueChange = { password = it },
                 label = { Text("Password") },
                 modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                            contentDescription = null
+                        )
+                    }
+                }
             )
 
-            // Role selector
+            // Role dropdown
+            var expanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = { expanded = !expanded }
@@ -90,30 +121,20 @@ fun RegisterScreen(
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Role") },
-                    trailingIcon = {
-                        Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
-                    },
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth()
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    modifier = Modifier.fillMaxWidth().menuAnchor()
                 )
                 ExposedDropdownMenu(
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Patient") },
-                        onClick = {
-                            role = "patient"
-                            expanded = false
-                        }
+                        text = { Text("patient") },
+                        onClick = { role = "patient"; expanded = false }
                     )
                     DropdownMenuItem(
-                        text = { Text("Caretaker") },
-                        onClick = {
-                            role = "caretaker"
-                            expanded = false
-                        }
+                        text = { Text("caretaker") },
+                        onClick = { role = "caretaker"; expanded = false }
                     )
                 }
             }
@@ -122,20 +143,25 @@ fun RegisterScreen(
                 onClick = {
                     if (name.isBlank() || email.isBlank() || password.isBlank()) {
                         scope.launch {
-                            snackbarHostState.showSnackbar("All fields are required")
+                            snackbarHostState.showSnackbar("Please fill in all fields")
                         }
                     } else {
-                        onRegister(name, email, password, role)
+                        viewModel.register(name, email, password, role)
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Register")
+                Text("Sign Up")
             }
 
             TextButton(onClick = onNavigateToLogin) {
-                Text("Already have an account? Login")
+                Text("Already have an account? Sign In")
+            }
+
+            if (authState is AuthState.Loading) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
         }
     }
 }
+
