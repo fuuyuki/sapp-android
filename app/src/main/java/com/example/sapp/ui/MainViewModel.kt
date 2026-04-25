@@ -9,18 +9,11 @@ import androidx.lifecycle.viewModelScope
 import com.example.sapp.data.model.*
 import com.example.sapp.data.repository.AppRepository
 import com.example.sapp.data.local.dataStore
+import com.example.sapp.ui.state.AuthState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
-
-sealed class AuthState {
-    object Idle : AuthState()
-    object Loading : AuthState()        // startup session check
-    object LoggingIn : AuthState()      // user pressed login
-    data class Success(val token: String) : AuthState()
-    data class Error(val message: String) : AuthState()
-}
 
 class MainViewModel(
     private val repository: AppRepository,
@@ -37,6 +30,14 @@ class MainViewModel(
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState
 
+    fun setAuthError(message: String) {
+        _authState.value = AuthState.Error(message)
+    }
+
+    fun setSessionReady() {
+        _authState.value = AuthState.SessionReady
+    }
+
     private var currentUserId: UUID? = null
     private val tokenKey = stringPreferencesKey("jwt_token")
 
@@ -46,47 +47,47 @@ class MainViewModel(
 
     fun checkSession() {
         viewModelScope.launch {
-            _authState.value = AuthState.Loading   // show loading immediately
+            _authState.value = AuthState.Loading
             try {
                 val meResponse = repository.getMe()
                 currentUserId = meResponse.user_id
-                _authState.value = AuthState.Success("existing-token") // placeholder
                 refreshDashboard()
+                _authState.value = AuthState.SessionReady
             } catch (e: Exception) {
                 _authState.value = AuthState.Idle
             }
         }
     }
 
+
     fun login(email: String, pass: String) {
         viewModelScope.launch {
-            _authState.value = AuthState.Loading
+            _authState.value = AuthState.LoggingIn
             try {
                 val response = repository.login(email, pass)
                 if (response.isSuccessful) {
                     response.body()?.access_token?.let { token ->
-                        // Save token to DataStore
                         context.dataStore.edit { it[tokenKey] = token }
+                        _authState.value = AuthState.Success
 
                         try {
                             val meResponse = repository.getMe()
                             currentUserId = meResponse.user_id
-                            _authState.value = AuthState.Success(token)
                             refreshDashboard()
+                            _authState.value = AuthState.SessionReady
                         } catch (e: Exception) {
-                            _authState.value = AuthState.Error("Login successful but failed to get user ID: ${e.message}")
+                            setAuthError("Login successful but failed to get user ID: ${e.message}")
                         }
-                    } ?: run {
-                        _authState.value = AuthState.Error("No token received")
-                    }
+                    } ?: setAuthError("No token received")
                 } else {
-                    _authState.value = AuthState.Error("Login failed. Check credentials.")
+                    setAuthError("Login failed. Check credentials.")
                 }
             } catch (e: Exception) {
-                _authState.value = AuthState.Error(e.localizedMessage ?: "Unknown error")
+                setAuthError(e.localizedMessage ?: "Unknown error")
             }
         }
     }
+
 
     fun register(name: String, email: String, pass: String, role: String) {
         viewModelScope.launch {
@@ -94,7 +95,7 @@ class MainViewModel(
             try {
                 val response = repository.register(name, email, pass, role)
                 if (response.isSuccessful) {
-                    _authState.value = AuthState.Success("registered")
+                    _authState.value = AuthState.Success
                 } else {
                     _authState.value = AuthState.Error("Registration failed: ${response.code()}")
                 }
@@ -110,14 +111,18 @@ class MainViewModel(
         viewModelScope.launch {
             try {
                 val response = repository.registerToken(userId, token)
-                if (!response.isSuccessful) {
-                    errorMessage.value = "Failed to register FCM token: ${response.code()}"
+                if (response.isSuccessful) {
+                    // Token registered successfully → session is ready
+                    setSessionReady()
+                } else {
+                    setAuthError("Failed to register FCM token: ${response.code()}")
                 }
             } catch (e: Exception) {
-                errorMessage.value = "Error registering FCM token: ${e.localizedMessage}"
+                setAuthError("Error registering FCM token: ${e.localizedMessage}")
             }
         }
     }
+
 
 
     fun loadUserProfile(userId: UUID) {

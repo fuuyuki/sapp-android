@@ -21,6 +21,7 @@ import androidx.navigation.NavController
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.launch
 import com.example.sapp.R
+import com.example.sapp.ui.state.AuthState
 
 @Composable
 fun LoginScreen(
@@ -43,10 +44,13 @@ fun LoginScreen(
                 FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         val token = task.result
-                        Log.d("FCM", "FCM Device Token: $token")
                         viewModel.registerFcmToken(token)
+                    } else {
+                        viewModel.setAuthError("Failed to get FCM token")
                     }
                 }
+            }
+            is AuthState.SessionReady -> {
                 navController.navigate("dashboard") {
                     popUpTo("login") { inclusive = true }
                 }
@@ -57,6 +61,7 @@ fun LoginScreen(
             else -> Unit
         }
     }
+
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }

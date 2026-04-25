@@ -6,7 +6,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,6 +19,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import com.example.sapp.R
+import com.example.sapp.ui.state.AuthState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,8 +41,7 @@ fun RegisterScreen(
     // React to auth state changes
     LaunchedEffect(authState) {
         when (authState) {
-            is AuthState.Success -> {
-                // Registration success → navigate back to login
+            AuthState.Success -> {
                 navController.navigate("login") {
                     popUpTo("register") { inclusive = true }
                 }
@@ -56,6 +55,7 @@ fun RegisterScreen(
             else -> Unit
         }
     }
+
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
