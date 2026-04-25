@@ -98,16 +98,16 @@ fun DashboardScreen(
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(
-                    selected = true,
-                    onClick = { /* Dashboard */ },
-                    icon = { Icon(Icons.Default.Home, contentDescription = null) },
-                    label = { Text("Dashboard") }
-                )
-                NavigationBarItem(
                     selected = false,
                     onClick = onNavigateToDevices,
                     icon = { Icon(Icons.Default.Devices, contentDescription = null) },
                     label = { Text("Devices") }
+                )
+                NavigationBarItem(
+                    selected = false,
+                    onClick = onNavigateToAddMeds,
+                    icon = { Icon(Icons.Default.Medication, contentDescription = null) },
+                    label = { Text("Add Meds") }
                 )
                 NavigationBarItem(
                     selected = false,
