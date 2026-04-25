@@ -144,7 +144,10 @@ class MainActivity : ComponentActivity() {
                             val devicesList by viewModel.devices.collectAsState()
                             DeviceListScreen(
                                 devices = devicesList,
-                                onDeviceClick = { /* handle device click */ }
+                                onDeviceClick = {
+                                },
+                                onBack = { navController.popBackStack() },
+                                onRefresh = { viewModel.refreshDashboard() }
                             )
                         }
 
