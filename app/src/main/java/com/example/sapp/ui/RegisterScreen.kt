@@ -73,7 +73,7 @@ fun RegisterScreen(
         ) {
             // ✅ Logo image
             Image(
-                painter = painterResource(id = R.drawable.ic_pill),
+                painter = painterResource(id = R.drawable.pills_375879),
                 contentDescription = "App Logo",
                 modifier = Modifier.size(96.dp)
             )
@@ -162,7 +162,7 @@ fun RegisterScreen(
             }
 
             if (authState is AuthState.Loading) {
-                CircularProgressIndicator(modifier = Modifier.fillMaxWidth())
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
         }
     }

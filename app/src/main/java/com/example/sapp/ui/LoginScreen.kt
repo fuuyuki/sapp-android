@@ -94,7 +94,7 @@ fun LoginScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.ic_pill),
+                        painter = painterResource(id = R.drawable.pills_375879),
                         contentDescription = "App Logo",
                         modifier = Modifier.size(96.dp)
                     )
