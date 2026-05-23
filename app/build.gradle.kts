@@ -42,7 +42,10 @@ android {
 }
 
 dependencies {
+    // Java 8+ API support for older Android versions
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+
+    // AndroidX & Compose (Using BOM to manage versions)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -51,38 +54,36 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-    // Extended icons for Visibility and VisibilityOff
     implementation(libs.androidx.compose.material.icons.extended)
 
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    debugImplementation(libs.androidx.compose.ui.tooling)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
+    // Navigation (REMOVED DUPLICATE AND OLD VERSION)
+    // Use the version from your libs.versions.toml or specify ONE here
+    implementation(libs.androidx.navigation.compose)
 
-    // Retrofit + JSON
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-    // OkHttp (for JWT interceptor)
+    // Retrofit + JSON (Consider moving versions to libs.versions.toml later)
+    implementation("com.squareup.retrofit2:retrofit:2.11.0") // Updated to 2.11.0
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+
+    // OkHttp
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    // Jetpack Lifecycle + ViewModel
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.10.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
-    // RecyclerView + Material Design
-    implementation("androidx.recyclerview:recyclerview:1.4.0")
-    // DataStore (for JWT token persistence)
-    implementation("androidx.datastore:datastore-preferences:1.2.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
+
+    // Lifecycle (Cleaned up duplicates)
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
+
+    // DataStore & Persistence
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
-    
-    // Firebase Cloud Messaging
+
+    // Firebase (Using BOM is correct)
     implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
     implementation("com.google.firebase:firebase-messaging-ktx")
 
@@ -91,7 +92,14 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
 
-    // Navigation
-    implementation(libs.androidx.navigation.compose)
-    implementation("androidx.navigation:navigation-compose:2.7.0")
+    // Testing
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    implementation(libs.androidx.glance.appwidget)
 }

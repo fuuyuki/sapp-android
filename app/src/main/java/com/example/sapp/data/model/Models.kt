@@ -50,7 +50,7 @@ data class AdherenceSummaryResponse(
 data class DeviceRequest(
     val name: String,
     val chip_id: String,
-    val user_id: UUID,
+    val patient_id: UUID,
     val api_key: String,
     val status: String = "offline"
 )
@@ -59,7 +59,7 @@ data class DeviceOut(
     val name: String,
     val chip_id: String,
     val status: String,
-    val user_id: UUID,
+    val patient_id: UUID,
     val last_seen: String?,
     val api_key: String
 )
@@ -69,7 +69,7 @@ data class ScheduleRequest(
     val pillname: String,
     val dose_time: String,
     val repeat_days: Int,
-    val user_id: UUID,
+    val patient_id: UUID,
     val device_id: String
 )
 
@@ -78,7 +78,7 @@ data class ScheduleOut(
     val pillname: String,
     val dose_time: String,
     val repeat_days: Int,
-    val user_id: UUID,
+    val patient_id: UUID,
     val device_id: String
 )
 
@@ -87,7 +87,7 @@ data class MedlogRequest(
     val pillname: String,
     val scheduled_time: String,
     val status: String,
-    val user_id: UUID,
+    val patient_id: UUID,
     val device_id: String
 )
 
@@ -96,7 +96,7 @@ data class MedlogOut(
     val pillname: String,
     val scheduled_time: String,
     val status: String,
-    val user_id: UUID,
+    val patient_id: UUID,
     val device_id: String
 )
 

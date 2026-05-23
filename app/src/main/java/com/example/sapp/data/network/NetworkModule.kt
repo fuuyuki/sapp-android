@@ -3,7 +3,7 @@ package com.example.sapp.data.network
 import android.content.Context
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import com.example.sapp.data.api.ApiService
+import com.example.sapp.ApiService
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor

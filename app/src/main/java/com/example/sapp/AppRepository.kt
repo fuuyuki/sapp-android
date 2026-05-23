@@ -1,7 +1,7 @@
 // com.example.sapp.data.repository.AppRepository.kt
-package com.example.sapp.data.repository
+package com.example.sapp
 
-import com.example.sapp.data.api.ApiService
+//import com.example.sapp.data.api.ApiService
 import com.example.sapp.data.model.*
 import java.util.UUID
 

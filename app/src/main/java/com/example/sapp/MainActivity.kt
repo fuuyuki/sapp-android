@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.example.sapp.data.model.ScheduleOut
 import com.example.sapp.data.network.RetrofitClient
-import com.example.sapp.data.repository.AppRepository
+import com.example.sapp.AppRepository
 import com.example.sapp.ui.*
 import com.example.sapp.ui.LoginScreen
 import com.example.sapp.ui.RegisterScreen

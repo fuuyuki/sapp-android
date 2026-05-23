@@ -1,5 +1,5 @@
 // com.example.sapp.data.api.ApiService.kt
-package com.example.sapp.data.api
+package com.example.sapp
 
 import com.example.sapp.data.model.*
 import retrofit2.Response
@@ -32,9 +32,17 @@ interface ApiService {
     @GET("devices")
     suspend fun getDevice(@Query("user_id") userId: UUID): DeviceOut
 
+    @GET("devices")
+    suspend fun getDevicesByPatient(@Query("patient_id") patientId: UUID): List<DeviceOut>
+
+    @GET("devices")
+    suspend fun getDevicesByCaretaker(@Query("caretaker_id") caretakerId: UUID): List<DeviceOut>
+
+
     // --- Schedules ---
     @GET("schedules/{user_id}")
     suspend fun getSchedules(@Path("user_id") userId: UUID): List<ScheduleOut>
+
 
     @POST("schedules/{user_id}")
     suspend fun createSchedule(@Path("user_id") userId: UUID, @Body schedule: ScheduleRequest): ScheduleOut

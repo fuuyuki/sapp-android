@@ -7,7 +7,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sapp.data.model.*
-import com.example.sapp.data.repository.AppRepository
+import com.example.sapp.AppRepository
 import com.example.sapp.data.local.dataStore
 import com.example.sapp.ui.state.AuthState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,6 +19,8 @@ class MainViewModel(
     private val repository: AppRepository,
     private val context: Context
 ) : ViewModel() {
+
+    val userRole = MutableStateFlow<String?>(null) // "patient" or "caretaker"
 
     val devices = MutableStateFlow<List<DeviceOut>>(emptyList())
     val schedules = MutableStateFlow<List<ScheduleOut>>(emptyList())
@@ -186,7 +188,7 @@ class MainViewModel(
                     pillname = pillname,
                     dose_time = doseTime,
                     repeat_days = repeatDays,
-                    user_id = userId,
+                    patient_id = userId,
                     device_id = deviceId
                 )
                 repository.createSchedule(userId, request)
