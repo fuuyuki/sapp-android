@@ -184,6 +184,8 @@ class MainViewModel(
 
     // Data loader for a specific patient (Caretaker feature)
     fun loadPatientData(patientId: UUID) {
+        // Get the logged-in caretaker's ID
+        val caretakerId = _currentUserId.value ?: return
         viewModelScope.launch {
             try {
                 // full user profile
@@ -196,11 +198,13 @@ class MainViewModel(
                 val patientDevices: List<DeviceOut> = repository.getDevicesByPatient(patientId)
                 devices.value = patientDevices
 
-                // schedules + medlogs
-                loadSchedules(patientId)
+                // ✅ Use the new caretaker-patient specific endpoint
+                schedules.value = repository.getSchedulesForPatient(caretakerId, patientId)
+
                 loadMedlogs(patientId)
             } catch (e: Exception) {
                 errorMessage.value = "Failed to load patient data"
+                schedules.value = emptyList()
                 devices.value = emptyList()
             }
         }

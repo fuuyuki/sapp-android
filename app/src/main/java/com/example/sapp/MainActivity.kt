@@ -180,7 +180,15 @@ class MainActivity : ComponentActivity() {
                                     devices = viewModel.devices.collectAsState().value,
                                     schedules = viewModel.schedules.collectAsState().value,
                                     medlogs = viewModel.medlogs.collectAsState().value,
-                                    onNavigateBack = { navController.popBackStack() }
+                                    onNavigateBack = { navController.popBackStack() },
+                                    onDeleteSchedule = { scheduleId ->
+                                        viewModel.deleteSchedule(scheduleId)
+                                    },
+                                    onEditSchedule = { schedule ->
+                                        // Logic to open edit screen (AddMedicationScreen with initialSchedule)
+                                        scheduleToEdit = schedule
+                                        navController.navigate("add_meds/${singlePatient.id}")
+                                    }
                                 )
                             } ?: Box(modifier = Modifier.fillMaxSize()) {
                                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))

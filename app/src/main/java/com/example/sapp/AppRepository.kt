@@ -30,9 +30,10 @@ class AppRepository(private val apiService: ApiService) {
     suspend fun getDevicesByCaretaker(caretakerId: UUID): List<DeviceOut> =
         apiService.getDevicesByCaretaker(caretakerId)
 
-
-
     suspend fun getSchedules(userId: UUID) = apiService.getSchedules(userId)
+
+    suspend fun getSchedulesForPatient(caretakerId: UUID, patientId: UUID) =
+        apiService.getSchedulesForPatient(caretakerId, patientId)
 
     suspend fun createSchedule(userId: UUID, schedule: ScheduleRequest) = 
         apiService.createSchedule(userId, schedule)

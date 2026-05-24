@@ -5,6 +5,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,7 +25,10 @@ fun PatientDetailsScreen(
     devices: List<DeviceOut>,
     schedules: List<ScheduleOut>,
     medlogs: List<MedlogOut>,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    // ✅ Add these new callbacks
+    onDeleteSchedule: (UUID) -> Unit,
+    onEditSchedule: (ScheduleOut) -> Unit
 ) {
     val currentDate = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault()).format(Date())
 
@@ -80,7 +85,11 @@ fun PatientDetailsScreen(
                 Text("No schedules found", style = MaterialTheme.typography.bodyMedium)
             } else {
                 schedules.forEach { schedule ->
-                    ScheduleCard_Patient(schedule)
+                    ScheduleCard_Patient(
+                        schedule = schedule,
+                        onEdit = { onEditSchedule(schedule) },
+                        onDelete = { onDeleteSchedule(schedule.id) }
+                    )
                 }
             }
 
@@ -179,15 +188,42 @@ fun StatusBadgeSmall(status: String) {
 }
 
 @Composable
-fun ScheduleCard_Patient(schedule: ScheduleOut) {
+fun ScheduleCard_Patient(
+    schedule: ScheduleOut,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         shape = MaterialTheme.shapes.large
     ) {
-        Column(Modifier.padding(16.dp)) {
-            Text("Medication: ${schedule.pillname}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text("Time: ${schedule.dose_time}", style = MaterialTheme.typography.bodySmall)
+        Row(
+            modifier = Modifier.padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = schedule.pillname,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Time: ${schedule.dose_time}",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
+            // ✅ Action buttons for Caretaker
+            Row {
+                IconButton(onClick = onEdit) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.primary)
+                }
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                }
+            }
         }
     }
 }
