@@ -124,9 +124,9 @@ fun PatientDashboardScreen(
             WelcomeBanner(user, currentDate)
             HealthSnapshot(adherence)
             ServicesList(
-                onDevices = onNavigateToDevices,
-                onSchedules = onNavigateToSchedules,
-                onMedlogs = onNavigateToMedlogs
+                onNavigateToDevices,
+                onNavigateToSchedules,
+                onNavigateToMedlogs
             )
         }
     }
