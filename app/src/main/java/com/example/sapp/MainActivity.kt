@@ -9,8 +9,11 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.example.sapp.data.model.ScheduleOut
@@ -20,6 +23,8 @@ import com.example.sapp.ui.*
 import com.example.sapp.ui.LoginScreen
 import com.example.sapp.ui.RegisterScreen
 import com.example.sapp.ui.DeviceListScreen
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -40,6 +45,8 @@ class MainActivity : ComponentActivity() {
             MedicalAppTheme{
                 val authState by viewModel.authState.collectAsState()
                 val userProfile by viewModel.userProfile.collectAsState()
+                val selectedPatient by viewModel.selectedPatient.collectAsState() // Single patient
+                val patientList by viewModel.patients.collectAsState() // The list of all patients
                 val adherenceSummary by viewModel.adherenceSummary.collectAsState()
                 val errorMessage by viewModel.errorMessage.collectAsState()
                 val userRole by viewModel.userRole.collectAsState()
@@ -128,11 +135,13 @@ class MainActivity : ComponentActivity() {
 
                                     CaretakerDashboardScreen(
                                         user = userProfile,
-                                        caretakerId = userId ?: UUID.randomUUID(), // Ensure UUID is imported
+                                        caretakerId = userId ?: UUID.randomUUID(),
                                         viewModel = caretakerViewModel,
                                         onNavigateToPatientDetails = { patient ->
-                                            // Define where to go when clicking a patient
-                                            // navController.navigate("patient_details/${patient.user_id}")
+                                            navController.navigate("patient_details/${patient.id}")
+                                        },
+                                        onNavigateToAddMeds = { patientId ->
+                                            navController.navigate("add_meds/$patientId")
                                         },
                                         onLogout = { showLogoutDialog = true }
                                     )
@@ -151,6 +160,70 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         }
+
+                        composable(
+                            route = "patient_details/{patientId}",
+                            arguments = listOf(navArgument("patientId") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            val patientId = backStackEntry.arguments?.getString("patientId") ?: return@composable
+
+                            // Use your ViewModel to load patient data
+                            LaunchedEffect(patientId) {
+                                viewModel.loadPatientData(UUID.fromString(patientId))
+                            }
+
+                            // Fixed: Use selectedPatient (UserOut?) instead of the list
+                            selectedPatient?.let { singlePatient ->
+                                PatientDetailsScreen(
+                                    patient = singlePatient, // Fixed: now passing UserOut
+                                    adherence = adherenceSummary,
+                                    devices = viewModel.devices.collectAsState().value,
+                                    schedules = viewModel.schedules.collectAsState().value,
+                                    medlogs = viewModel.medlogs.collectAsState().value,
+                                    onNavigateBack = { navController.popBackStack() }
+                                )
+                            } ?: Box(modifier = Modifier.fillMaxSize()) {
+                                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                            }
+                        }
+                        // Patient Selector
+                        composable("patient_selector") {
+                            val patients by viewModel.patients.collectAsState()
+
+                            LazyColumn {
+                                items(patients) { patient ->
+                                    PatientCard(patient, onClick = {
+                                        navController.navigate("add_meds/${patient.id}")
+                                    })
+                                }
+                            }
+                        }
+                        // Add Meds to selected patient
+                        composable(
+                            route = "add_meds/{patientId}",
+                            arguments = listOf(navArgument("patientId") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            val patientId = backStackEntry.arguments?.getString("patientId") ?: return@composable
+
+                            AddMedicationScreen(
+                                initialSchedule = scheduleToEdit,
+                                onBack = { navController.popBackStack() },
+                                onSave = { name, time, repeat ->
+                                    if (scheduleToEdit == null) {
+                                        viewModel.createScheduleForPatient(UUID.fromString(patientId), name, time, repeat) {
+                                            navController.popBackStack()
+                                            viewModel.refreshDashboard()
+                                        }
+                                    } else {
+                                        viewModel.updateSchedule(scheduleToEdit!!.id, name, time, repeat) {
+                                            navController.popBackStack()
+                                            viewModel.refreshDashboard()
+                                        }
+                                    }
+                                }
+                            )
+                        }
+
 
                         composable("devices") {
                             val devicesList by viewModel.devices.collectAsState()

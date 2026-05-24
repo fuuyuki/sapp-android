@@ -44,6 +44,8 @@ class MainViewModel(
     val userId: StateFlow<UUID?> = _currentUserId.asStateFlow()
     private val _userRole = MutableStateFlow<String?>(null)
     val userRole: StateFlow<String?> = _userRole.asStateFlow()
+    val selectedPatient = MutableStateFlow<UserOut?>(null)
+    val patients = MutableStateFlow<List<UserOut>>(emptyList())
 
     private val tokenKey = stringPreferencesKey("jwt_token")
 
@@ -245,6 +247,34 @@ class MainViewModel(
                 }
             } catch (e: Exception) {
                 errorMessage.value = "Error deleting schedule: ${e.localizedMessage}"
+            }
+        }
+    }
+    // Data loader for a specific patient (Caretaker feature)
+    fun loadPatientData(patientId: UUID) {
+        viewModelScope.launch {
+            try {
+                selectedPatient.value = repository.getUser(patientId)
+                loadAdherenceSummary(patientId)
+                loadDevices(patientId)
+                loadSchedules(patientId)
+                loadMedlogs(patientId)
+            } catch (e: Exception) {
+                errorMessage.value = "Failed to load patient data"
+            }
+        }
+    }
+
+    //  Schedule creation for a specific patient (Caretaker feature)
+    fun createScheduleForPatient(patientId: UUID, pillname: String, doseTime: String, repeatDays: Int, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                val deviceId = "DEFAULT_CHIP" // Or fetch from devices list
+                val request = ScheduleRequest(pillname, doseTime, repeatDays, patientId, deviceId)
+                repository.createSchedule(patientId, request)
+                onSuccess()
+            } catch (e: Exception) {
+                errorMessage.value = e.message
             }
         }
     }
