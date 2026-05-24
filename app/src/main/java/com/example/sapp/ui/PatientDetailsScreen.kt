@@ -273,9 +273,36 @@ fun MedlogCard_Patient(log: MedlogOut) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         shape = MaterialTheme.shapes.large
     ) {
-        Column(Modifier.padding(16.dp)) {
-            Text("Medication: ${log.pillname}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text("Status: ${log.status}", style = MaterialTheme.typography.bodySmall)
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = log.pillname,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                // Extract time from ISO string for the subtext
+                val timeOnly = try {
+                    log.scheduled_time.substringAfter("T").substringBeforeLast(":")
+                } catch (e: Exception) {
+                    log.scheduled_time
+                }
+
+                Text(
+                    text = "Scheduled for: $timeOnly",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Status Badge (Proportional to the others)
+            StatusBadgeSmall(status = log.status)
         }
     }
 }

@@ -45,6 +45,10 @@ class AppRepository(private val apiService: ApiService) {
 
     suspend fun getMedlogs(userId: UUID) = apiService.getMedlogs(userId)
 
+    suspend fun getMedlogsByCaretakerForPatient(caretakerId: UUID, patientId: UUID): List<MedlogOut> {
+        return apiService.getMedlogsByCaretakerForPatient(caretakerId, patientId)
+    }
+
     suspend fun registerToken(userId: UUID, token: String) =
         apiService.registerToken(TokenRegisterRequest(userId, token))
 }

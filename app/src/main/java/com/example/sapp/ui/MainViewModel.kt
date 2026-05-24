@@ -187,25 +187,35 @@ class MainViewModel(
         // Get the logged-in caretaker's ID
         val caretakerId = _currentUserId.value ?: return
         viewModelScope.launch {
+            // 1. Load the basic profile first (essential)
             try {
-                // full user profile
                 selectedPatient.value = repository.getUser(patientId)
-
-                // adherence summary
                 loadAdherenceSummary(patientId)
-
-                // ✅ devices: now returns a list directly
-                val patientDevices: List<DeviceOut> = repository.getDevicesByPatient(patientId)
-                devices.value = patientDevices
-
-                // ✅ Use the new caretaker-patient specific endpoint
-                schedules.value = repository.getSchedulesForPatient(caretakerId, patientId)
-
-                loadMedlogs(patientId)
             } catch (e: Exception) {
-                errorMessage.value = "Failed to load patient data"
-                schedules.value = emptyList()
+                errorMessage.value = "Failed to load patient profile"
+            }
+
+            // 2. Load Devices (Independent)
+            try {
+                devices.value = repository.getDevicesByPatient(patientId)
+            } catch (e: Exception) {
                 devices.value = emptyList()
+            }
+
+            // 3. Load Schedules (Independent)
+            try {
+                schedules.value = repository.getSchedulesForPatient(caretakerId, patientId)
+            } catch (e: Exception) {
+                // Backend might return 404 if no schedules exist, treat as empty
+                schedules.value = emptyList()
+            }
+
+            // 4. Load Medlogs (Independent)
+            try {
+                medlogs.value = repository.getMedlogsByCaretakerForPatient(caretakerId, patientId)
+            } catch (e: Exception) {
+                // Backend might return 404 if no logs exist, treat as empty
+                medlogs.value = emptyList()
             }
         }
     }

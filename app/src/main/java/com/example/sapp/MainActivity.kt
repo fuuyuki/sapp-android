@@ -172,6 +172,8 @@ class MainActivity : ComponentActivity() {
                                 viewModel.loadPatientData(UUID.fromString(patientId))
                             }
 
+                            val medlogsList by viewModel.medlogs.collectAsState()
+
                             // Fixed: Use selectedPatient (UserOut?) instead of the list
                             selectedPatient?.let { singlePatient ->
                                 PatientDetailsScreen(
@@ -179,7 +181,7 @@ class MainActivity : ComponentActivity() {
                                     adherence = adherenceSummary,
                                     devices = viewModel.devices.collectAsState().value,
                                     schedules = viewModel.schedules.collectAsState().value,
-                                    medlogs = viewModel.medlogs.collectAsState().value,
+                                    medlogs = medlogsList,
                                     onNavigateBack = { navController.popBackStack() },
                                     onDeleteSchedule = { scheduleId ->
                                         viewModel.deleteSchedule(scheduleId)

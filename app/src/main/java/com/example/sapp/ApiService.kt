@@ -65,6 +65,13 @@ interface ApiService {
     @GET("medlogs/{user_id}")
     suspend fun getMedlogs(@Path("user_id") userId: UUID): List<MedlogOut>
 
+    @GET("medlogs/{caretaker_id}/{patient_id}")
+    suspend fun getMedlogsByCaretakerForPatient(
+        @Path("caretaker_id") caretakerId: UUID,
+        @Path("patient_id") patientId: UUID
+    ): List<MedlogOut>
+
+
     // --- FCM Tokens ---
     @POST("register_token")
     suspend fun registerToken(@Body request: TokenRegisterRequest): Response<MessageResponse>
