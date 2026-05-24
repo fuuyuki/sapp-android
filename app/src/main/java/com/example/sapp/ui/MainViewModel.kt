@@ -300,7 +300,15 @@ class MainViewModel(
                 update["repeat_days"] = repeatDays
 
                 repository.updateSchedule(scheduleId, update)
-                refreshDashboard()
+
+                // ✅ FIX: Context-aware refresh
+                val pId = selectedPatient.value?.id
+                if (pId != null) {
+                    loadPatientData(pId)
+                } else {
+                    refreshDashboard()
+                }
+
                 onSuccess()
             } catch (e: Exception) {
                 errorMessage.value = "Failed to update schedule: ${e.localizedMessage}"
@@ -313,12 +321,18 @@ class MainViewModel(
             try {
                 val response = repository.deleteSchedule(scheduleId)
                 if (response.isSuccessful) {
-                    refreshDashboard()
+                    // ✅ FIX: Check if we are in "Patient Detail" mode
+                    val pId = selectedPatient.value?.id
+                    if (pId != null) {
+                        loadPatientData(pId) // Reload the specific patient
+                    } else {
+                        refreshDashboard()   // Reload own dashboard (for patients)
+                    }
                 } else {
-                    errorMessage.value = "Failed to delete schedule: ${response.code()}"
+                    errorMessage.value = "Failed to delete schedule"
                 }
             } catch (e: Exception) {
-                errorMessage.value = "Error deleting schedule: ${e.localizedMessage}"
+                errorMessage.value = "Error: ${e.localizedMessage}"
             }
         }
     }

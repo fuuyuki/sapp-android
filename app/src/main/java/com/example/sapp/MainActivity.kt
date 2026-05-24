@@ -241,12 +241,12 @@ class MainActivity : ComponentActivity() {
                                     if (scheduleToEdit == null) {
                                         viewModel.createScheduleForPatient(patientId, name, time, repeat, validDeviceId) {
                                             navController.popBackStack()
-                                            viewModel.refreshDashboard()
+                                            viewModel.loadPatientData(patientId)
                                         }
                                     } else {
                                         viewModel.updateSchedule(scheduleToEdit!!.id, name, time, repeat) {
                                             navController.popBackStack()
-                                            viewModel.refreshDashboard()
+                                            viewModel.loadPatientData(patientId)
                                         }
                                     }
                                 }
