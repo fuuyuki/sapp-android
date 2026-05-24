@@ -55,10 +55,12 @@ fun CaretakerDashboardScreen(
     caretakerId: UUID,
     viewModel: CaretakerDashboardViewModel,
     onNavigateToPatientDetails: (UserOut) -> Unit,
+    onNavigateToAddMeds: (UUID) -> Unit, // new callback
     onLogout: () -> Unit
 ) {
     val currentDate = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault()).format(Date())
     val patients by viewModel.patients.collectAsState()
+    var showPatientSelector by remember { mutableStateOf(false) }
 
     // Load patients when screen starts
     LaunchedEffect(caretakerId) {
@@ -69,7 +71,6 @@ fun CaretakerDashboardScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("SApp Health - Caretaker", color = MaterialTheme.colorScheme.onPrimary) },
-                // Inside CenterAlignedTopAppBar actions
                 actions = {
                     IconButton(onClick = { viewModel.loadPatients(caretakerId) }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = MaterialTheme.colorScheme.onPrimary)
@@ -78,11 +79,27 @@ fun CaretakerDashboardScreen(
                         Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout", tint = MaterialTheme.colorScheme.onPrimary)
                     }
                 },
-                        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
+        },
+        bottomBar = {
+            NavigationBar {
+                NavigationBarItem(
+                    selected = true,
+                    onClick = { /* Dashboard stays here */ },
+                    icon = { Icon(Icons.Default.Home, contentDescription = null) },
+                    label = { Text("Dashboard") }
+                )
+                NavigationBarItem(
+                    selected = false,
+                    onClick = { showPatientSelector = true },
+                    icon = { Icon(Icons.Default.Medication, contentDescription = null) },
+                    label = { Text("Add Meds") }
+                )
+            }
         }
     ) { padding ->
         Column(
@@ -99,8 +116,34 @@ fun CaretakerDashboardScreen(
                 }
             }
         }
+
+        // ✅ Patient selector dialog
+        if (showPatientSelector) {
+            AlertDialog(
+                onDismissRequest = { showPatientSelector = false },
+                title = { Text("Select Patient") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        patients.forEach { patient ->
+                            TextButton(onClick = {
+                                showPatientSelector = false
+                                onNavigateToAddMeds(patient.id)
+                            }) {
+                                Text(patient.name)
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showPatientSelector = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
     }
 }
+
 
 @Composable
 fun PatientCard(patient: UserOut, onClick: () -> Unit) {
