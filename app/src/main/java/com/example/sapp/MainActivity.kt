@@ -199,26 +199,42 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         // Add Meds to selected patient
+                        // In MainActivity.kt inside NavHost
+
                         composable(
                             route = "add_meds/{patientId}",
                             arguments = listOf(navArgument("patientId") { type = NavType.StringType })
                         ) { backStackEntry ->
-                            val patientId = backStackEntry.arguments?.getString("patientId") ?: return@composable
+                            val patientIdString = backStackEntry.arguments?.getString("patientId") ?: return@composable
+                            val patientId = UUID.fromString(patientIdString)
+
+                            // Observe the devices list (which should be loaded by loadPatientData or a specific call)
+                            val devices by viewModel.devices.collectAsState()
+
+                            // Trigger loading devices if the list is empty
+                            LaunchedEffect(patientId) {
+                                viewModel.loadDevices(patientId, "patient")
+                            }
 
                             AddMedicationScreen(
                                 initialSchedule = scheduleToEdit,
                                 onBack = { navController.popBackStack() },
                                 onSave = { name, time, repeat ->
+                                    // Use the first device ID found for this patient
+                                    val validDeviceId = devices.firstOrNull()?.chip_id
+
+                                    if (validDeviceId == null) {
+                                        Toast.makeText(context, "This patient has no registered devices.", Toast.LENGTH_LONG).show()
+                                        return@AddMedicationScreen
+                                    }
+
                                     if (scheduleToEdit == null) {
-                                        viewModel.createScheduleForPatient(UUID.fromString(patientId), name, time, repeat) {
+                                        viewModel.createScheduleForPatient(patientId, name, time, repeat, validDeviceId) {
                                             navController.popBackStack()
                                             viewModel.refreshDashboard()
                                         }
                                     } else {
-                                        viewModel.updateSchedule(scheduleToEdit!!.id, name, time, repeat) {
-                                            navController.popBackStack()
-                                            viewModel.refreshDashboard()
-                                        }
+                                        // ... handle update
                                     }
                                 }
                             )

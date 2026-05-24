@@ -249,6 +249,26 @@ class MainViewModel(
         }
     }
 
+    fun createScheduleForPatient(
+        patientId: UUID,
+        pillname: String,
+        doseTime: String,
+        repeatDays: Int,
+        deviceId: String, // Add this parameter
+        onSuccess: () -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                // No longer hardcoded to "DEFAULT_CHIP"
+                val request = ScheduleRequest(pillname, doseTime, repeatDays, patientId, deviceId)
+                repository.createSchedule(patientId, request)
+                onSuccess()
+            } catch (e: Exception) {
+                errorMessage.value = "Failed to create schedule: ${e.message}"
+            }
+        }
+    }
+
     fun updateSchedule(scheduleId: UUID, pillname: String, doseTime: String, repeatDays: Int, onSuccess: () -> Unit) {
         viewModelScope.launch {
             try {
