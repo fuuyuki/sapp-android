@@ -244,7 +244,10 @@ class MainActivity : ComponentActivity() {
                                             viewModel.refreshDashboard()
                                         }
                                     } else {
-                                        // ... handle update
+                                        viewModel.updateSchedule(scheduleToEdit!!.id, name, time, repeat) {
+                                            navController.popBackStack()
+                                            viewModel.refreshDashboard()
+                                        }
                                     }
                                 }
                             )
