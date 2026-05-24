@@ -28,6 +28,10 @@ interface ApiService {
     @GET("users/{user_id}/adherence-summary")
     suspend fun getAdherenceSummary(@Path("user_id") userId: UUID): AdherenceSummaryResponse
 
+    @GET("caretakers/{caretaker_id}/patients")
+    suspend fun getPatientsByCaretaker(@Path("caretaker_id") caretakerId: UUID): List<UserOut>
+
+
     // --- Devices ---
     @GET("devices")
     suspend fun getDevice(@Query("user_id") userId: UUID): DeviceOut
