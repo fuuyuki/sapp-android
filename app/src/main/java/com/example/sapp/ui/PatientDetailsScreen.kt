@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -60,9 +61,6 @@ fun PatientDetailsScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // ✅ Banner
-            WelcomeBanner(patient, currentDate)
-
             // ✅ Adherence snapshot
             HealthSnapshot(adherence)
 
@@ -101,15 +99,82 @@ fun PatientDetailsScreen(
 
 @Composable
 fun DeviceCard_Patient(device: DeviceOut) {
+    // 1. Parse the ISO date string (Same logic as DeviceListScreen)
+    val formattedDate = try {
+        val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSX", Locale.getDefault())
+        parser.timeZone = TimeZone.getTimeZone("UTC")
+        val date: Date? = parser.parse(device.last_seen ?: "")
+
+        val formatter = SimpleDateFormat("dd MMMM yyyy HH:mm", Locale.getDefault())
+        date?.let { formatter.format(it) } ?: (device.last_seen ?: "Never")
+    } catch (e: Exception) {
+        try {
+            val simpleParser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+            val date = simpleParser.parse(device.last_seen ?: "")
+            val formatter = SimpleDateFormat("dd MMMM yyyy HH:mm", Locale.getDefault())
+            date?.let { formatter.format(it) } ?: device.last_seen
+        } catch (e2: Exception) {
+            device.last_seen ?: "Unknown"
+        }
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         shape = MaterialTheme.shapes.large
     ) {
-        Column(Modifier.padding(16.dp)) {
-            Text(device.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text("Chip ID: ${device.chip_id}", style = MaterialTheme.typography.bodySmall)
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    device.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    "Last seen: $formattedDate",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    "ID: ${device.chip_id}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            // 2. Reuse the StatusBadge logic
+            StatusBadgeSmall(device.status)
         }
+    }
+}
+
+@Composable
+fun StatusBadgeSmall(status: String) {
+    val (bgColor, textColor) = when (status.lowercase()) {
+        "online" -> MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.onPrimary
+        "offline" -> MaterialTheme.colorScheme.error to MaterialTheme.colorScheme.onError
+        else -> MaterialTheme.colorScheme.tertiary to MaterialTheme.colorScheme.onTertiary
+    }
+
+    Surface(
+        color = bgColor,
+        shape = MaterialTheme.shapes.small,
+    ) {
+        Text(
+            text = status.uppercase(),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            color = textColor,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 

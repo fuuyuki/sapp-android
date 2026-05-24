@@ -92,14 +92,22 @@ fun DeviceListScreen(
 fun DeviceCard(device: DeviceOut, onClick: () -> Unit) {
     // Parse ISO string into Date
     val formattedDate = try {
-        val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
+        val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSX", Locale.getDefault())
         parser.timeZone = TimeZone.getTimeZone("UTC")
-        val date: Date? = parser.parse(device.last_seen)
+        val date: Date? = parser.parse(device.last_seen ?: "Never")
 
         val formatter = SimpleDateFormat("dd MMMM yyyy HH:mm", Locale.getDefault())
         date?.let { formatter.format(it) } ?: device.last_seen
     } catch (e: Exception) {
-        device.last_seen // fallback if parsing fails
+        // Fallback for simpler formats if the one above fails
+        try {
+            val simpleParser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+            val date = simpleParser.parse(device.last_seen ?: "")
+            val formatter = SimpleDateFormat("dd MMMM yyyy HH:mm", Locale.getDefault())
+            date?.let { formatter.format(it) } ?: device.last_seen
+        } catch (e2: Exception) {
+            device.last_seen ?: "Unknown"
+        }
     }
 
     Card(
