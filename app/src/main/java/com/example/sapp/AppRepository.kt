@@ -20,7 +20,17 @@ class AppRepository(private val apiService: ApiService) {
 
     suspend fun getAdherenceSummary(userId: UUID) = apiService.getAdherenceSummary(userId)
 
-    suspend fun getDevice(userId: UUID) = apiService.getDevice(userId)
+    suspend fun getDevices(userId: UUID): List<DeviceOut> =
+        apiService.getDevices(userId)
+
+
+    suspend fun getDevicesByPatient(patientId: UUID): List<DeviceOut> =
+        apiService.getDevicesByPatient(patientId)
+
+    suspend fun getDevicesByCaretaker(caretakerId: UUID): List<DeviceOut> =
+        apiService.getDevicesByCaretaker(caretakerId)
+
+
 
     suspend fun getSchedules(userId: UUID) = apiService.getSchedules(userId)
 

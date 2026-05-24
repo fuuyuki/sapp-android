@@ -34,7 +34,7 @@ interface ApiService {
 
     // --- Devices ---
     @GET("devices")
-    suspend fun getDevice(@Query("user_id") userId: UUID): DeviceOut
+    suspend fun getDevices(@Query("user_id") userId: UUID): List<DeviceOut>
 
     @GET("devices")
     suspend fun getDevicesByPatient(@Query("patient_id") patientId: UUID): List<DeviceOut>
@@ -43,10 +43,10 @@ interface ApiService {
     suspend fun getDevicesByCaretaker(@Query("caretaker_id") caretakerId: UUID): List<DeviceOut>
 
 
+
     // --- Schedules ---
     @GET("schedules/{user_id}")
     suspend fun getSchedules(@Path("user_id") userId: UUID): List<ScheduleOut>
-
 
     @POST("schedules/{user_id}")
     suspend fun createSchedule(@Path("user_id") userId: UUID, @Body schedule: ScheduleRequest): ScheduleOut

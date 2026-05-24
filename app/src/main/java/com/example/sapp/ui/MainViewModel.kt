@@ -166,16 +166,46 @@ class MainViewModel(
         }
     }
 
-    fun loadDevices(userId: UUID) {
+    // Applied role-based filtering for devices
+    fun loadDevices(userId: UUID, role: String) {
         viewModelScope.launch {
             try {
-                val device = repository.getDevice(userId)
-                devices.value = listOf(device)
+                val result: List<DeviceOut> = when (role) {
+                    "patient" -> repository.getDevicesByPatient(userId)      // returns List<DeviceOut>
+                    "caretaker" -> repository.getDevicesByCaretaker(userId)  // returns List<DeviceOut>
+                    else -> repository.getDevices(userId)              // fallback, also List<DeviceOut>
+                }
+                devices.value = result
             } catch (e: Exception) {
                 devices.value = emptyList()
             }
         }
     }
+
+    // Data loader for a specific patient (Caretaker feature)
+    fun loadPatientData(patientId: UUID) {
+        viewModelScope.launch {
+            try {
+                // full user profile
+                selectedPatient.value = repository.getUser(patientId)
+
+                // adherence summary
+                loadAdherenceSummary(patientId)
+
+                // ✅ devices: now returns a list directly
+                val patientDevices: List<DeviceOut> = repository.getDevicesByPatient(patientId)
+                devices.value = patientDevices
+
+                // schedules + medlogs
+                loadSchedules(patientId)
+                loadMedlogs(patientId)
+            } catch (e: Exception) {
+                errorMessage.value = "Failed to load patient data"
+                devices.value = emptyList()
+            }
+        }
+    }
+
 
     fun loadSchedules(userId: UUID) {
         viewModelScope.launch {
@@ -250,20 +280,7 @@ class MainViewModel(
             }
         }
     }
-    // Data loader for a specific patient (Caretaker feature)
-    fun loadPatientData(patientId: UUID) {
-        viewModelScope.launch {
-            try {
-                selectedPatient.value = repository.getUser(patientId)
-                loadAdherenceSummary(patientId)
-                loadDevices(patientId)
-                loadSchedules(patientId)
-                loadMedlogs(patientId)
-            } catch (e: Exception) {
-                errorMessage.value = "Failed to load patient data"
-            }
-        }
-    }
+
 
     //  Schedule creation for a specific patient (Caretaker feature)
     fun createScheduleForPatient(patientId: UUID, pillname: String, doseTime: String, repeatDays: Int, onSuccess: () -> Unit) {
@@ -280,12 +297,12 @@ class MainViewModel(
     }
 
     fun refreshDashboard() {
-        _currentUserId.value?.let {
-            loadUserProfile(it)
-            loadDevices(it)
-            loadAdherenceSummary(it)
-            loadSchedules(it)
-            loadMedlogs(it)
+        _currentUserId.value?.let { id ->
+            loadUserProfile(id)
+            loadDevices(id, userRole.value ?: "patient")
+            loadAdherenceSummary(id)
+            loadSchedules(id)
+            loadMedlogs(id)
         }
     }
 
