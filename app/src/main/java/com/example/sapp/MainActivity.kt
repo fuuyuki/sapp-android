@@ -25,6 +25,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.sapp.ui.state.AuthState
 import com.example.sapp.ui.theme.MedicalAppTheme
+import java.util.*
 
 
 class MainActivity : ComponentActivity() {
@@ -41,6 +42,8 @@ class MainActivity : ComponentActivity() {
                 val userProfile by viewModel.userProfile.collectAsState()
                 val adherenceSummary by viewModel.adherenceSummary.collectAsState()
                 val errorMessage by viewModel.errorMessage.collectAsState()
+                val userRole by viewModel.userRole.collectAsState()
+                val userId by viewModel.userId.collectAsState()
                 val scope = rememberCoroutineScope()
                 val context = LocalContext.current
                 var scheduleToEdit by remember { mutableStateOf<ScheduleOut?>(null) }
@@ -117,17 +120,36 @@ class MainActivity : ComponentActivity() {
                         }
 
                         composable("dashboard") {
-                            DashboardScreen(
-                                user = userProfile,
-                                adherence = adherenceSummary,
-                                onNavigateToDevices = { navController.navigate("devices") },
-                                onNavigateToSchedules = { navController.navigate("schedules") },
-                                onNavigateToMedlogs = { navController.navigate("medlogs") },
-                                onNavigateToAddMeds = { navController.navigate("add_meds") },
-                                onLogout = {
-                                    showLogoutDialog = true
+                            // Determine which dashboard to show based on role
+                            when (userRole) {
+                                "caretaker" -> {
+                                    // Initialize the Caretaker ViewModel
+                                    val caretakerViewModel = remember { CaretakerDashboardViewModel(repository) }
+
+                                    CaretakerDashboardScreen(
+                                        user = userProfile,
+                                        caretakerId = userId ?: UUID.randomUUID(), // Ensure UUID is imported
+                                        viewModel = caretakerViewModel,
+                                        onNavigateToPatientDetails = { patient ->
+                                            // Define where to go when clicking a patient
+                                            // navController.navigate("patient_details/${patient.user_id}")
+                                        },
+                                        onLogout = { showLogoutDialog = true }
+                                    )
                                 }
-                            )
+                                else -> {
+                                    // Default to Patient Dashboard
+                                    PatientDashboardScreen(
+                                        user = userProfile,
+                                        adherence = adherenceSummary,
+                                        onNavigateToDevices = { navController.navigate("devices") },
+                                        onNavigateToSchedules = { navController.navigate("schedules") },
+                                        onNavigateToMedlogs = { navController.navigate("medlogs") },
+                                        onNavigateToConfirmMeds = { navController.navigate("add_meds") },
+                                        onLogout = { showLogoutDialog = true }
+                                    )
+                                }
+                            }
                         }
 
                         composable("devices") {

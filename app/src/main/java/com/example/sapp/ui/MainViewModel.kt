@@ -1,6 +1,7 @@
 package com.example.sapp.ui
 
 import android.content.Context
+import androidx.compose.ui.semantics.role
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -12,15 +13,14 @@ import com.example.sapp.data.local.dataStore
 import com.example.sapp.ui.state.AuthState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
 
 class MainViewModel(
     private val repository: AppRepository,
-    private val context: Context
+    private val context: Context,
 ) : ViewModel() {
-
-    val userRole = MutableStateFlow<String?>(null) // "patient" or "caretaker"
 
     val devices = MutableStateFlow<List<DeviceOut>>(emptyList())
     val schedules = MutableStateFlow<List<ScheduleOut>>(emptyList())
@@ -40,7 +40,11 @@ class MainViewModel(
         _authState.value = AuthState.SessionReady
     }
 
-    private var currentUserId: UUID? = null
+    private val _currentUserId = MutableStateFlow<UUID?>(null)
+    val userId: StateFlow<UUID?> = _currentUserId.asStateFlow()
+    private val _userRole = MutableStateFlow<String?>(null)
+    val userRole: StateFlow<String?> = _userRole.asStateFlow()
+
     private val tokenKey = stringPreferencesKey("jwt_token")
 
     init {
@@ -52,7 +56,13 @@ class MainViewModel(
             _authState.value = AuthState.Loading
             try {
                 val meResponse = repository.getMe()
-                currentUserId = meResponse.user_id
+                _currentUserId.value = meResponse.user_id
+
+                // Fetch the full user object to get the role
+                val user = repository.getUser(meResponse.user_id)
+                _userRole.value = user.role // Now this works!
+                userProfile.value = user
+
                 refreshDashboard()
                 _authState.value = AuthState.SessionReady
             } catch (e: Exception) {
@@ -74,8 +84,14 @@ class MainViewModel(
 
                         try {
                             val meResponse = repository.getMe()
-                            currentUserId = meResponse.user_id
+                            _currentUserId.value = meResponse.user_id
+                            // ✅ set role here
+                            val user = repository.getUser(meResponse.user_id)
+                            _userRole.value = user.role // "patient" or "caretaker"
+                            userProfile.value = user
+
                             refreshDashboard()
+                            _authState.value = AuthState.Success
                             _authState.value = AuthState.SessionReady
                         } catch (e: Exception) {
                             setAuthError("Login successful but failed to get user ID: ${e.message}")
@@ -89,6 +105,7 @@ class MainViewModel(
             }
         }
     }
+
 
 
     fun register(name: String, email: String, pass: String, role: String) {
@@ -109,7 +126,7 @@ class MainViewModel(
 
 
     fun registerFcmToken(token: String) {
-        val userId = currentUserId ?: return
+        val userId = _currentUserId.value ?: return
         viewModelScope.launch {
             try {
                 val response = repository.registerToken(userId, token)
@@ -179,7 +196,7 @@ class MainViewModel(
     }
 
     fun createSchedule(pillname: String, doseTime: String, repeatDays: Int, onSuccess: () -> Unit) {
-        val userId = currentUserId ?: return
+        val userId = _currentUserId.value ?: return
         val deviceId = devices.value.firstOrNull()?.chip_id ?: "DEFAULT_CHIP"
 
         viewModelScope.launch {
@@ -233,7 +250,7 @@ class MainViewModel(
     }
 
     fun refreshDashboard() {
-        currentUserId?.let {
+        _currentUserId.value?.let {
             loadUserProfile(it)
             loadDevices(it)
             loadAdherenceSummary(it)
@@ -243,7 +260,7 @@ class MainViewModel(
     }
 
     fun logout() {
-        currentUserId = null
+        _currentUserId.value = null
         _authState.value = AuthState.Idle
         userProfile.value = null
         devices.value = emptyList()
