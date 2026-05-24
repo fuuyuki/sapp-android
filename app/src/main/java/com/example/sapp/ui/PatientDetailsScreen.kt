@@ -199,29 +199,67 @@ fun ScheduleCard_Patient(
         shape = MaterialTheme.shapes.large
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically // Keeps everything aligned in a straight line
         ) {
+            // ✅ Info Section (Takes up available space, pushing buttons to the right)
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = schedule.pillname,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleMedium, // Matches Device name size
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-                Text(
-                    text = "Time: ${schedule.dose_time}",
-                    style = MaterialTheme.typography.bodySmall
-                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // ✅ Time Badge (Proportional to the Status Badge)
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        text = try {
+                            schedule.dose_time.substringAfter("T").substringBeforeLast(":")
+                        } catch (e: Exception) {
+                            schedule.dose_time
+                        },
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
             }
 
-            // ✅ Action buttons for Caretaker
-            Row {
-                IconButton(onClick = onEdit) {
-                    Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.primary)
+            // ✅ Action Section (Grouped on the right)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(
+                    onClick = onEdit,
+                    modifier = Modifier.size(40.dp) // Standard icon button size
+                ) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Edit",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
-                IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+
+                Spacer(modifier = Modifier.width(4.dp))
+
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Delete",
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
         }
