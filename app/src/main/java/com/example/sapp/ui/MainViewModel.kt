@@ -186,6 +186,14 @@ class MainViewModel(
     fun loadPatientData(patientId: UUID) {
         // Get the logged-in caretaker's ID
         val caretakerId = _currentUserId.value ?: return
+
+        // ✅ 1. IMMEDIATELY clear the old data so the UI shows a clean state/loading
+        selectedPatient.value = null
+        devices.value = emptyList()
+        schedules.value = emptyList()
+        medlogs.value = emptyList()
+        adherenceSummary.value = null
+
         viewModelScope.launch {
             // 1. Load the basic profile first (essential)
             try {
