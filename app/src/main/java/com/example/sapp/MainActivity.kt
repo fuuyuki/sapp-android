@@ -154,7 +154,7 @@ class MainActivity : ComponentActivity() {
                                         onNavigateToDevices = { navController.navigate("devices") },
                                         onNavigateToSchedules = { navController.navigate("schedules") },
                                         onNavigateToMedlogs = { navController.navigate("medlogs") },
-                                        onNavigateToConfirmMeds = { navController.navigate("add_meds") },
+                                        onNavigateToConfirmMeds = { navController.navigate("confirm_meds") },
                                         onLogout = { showLogoutDialog = true }
                                     )
                                 }
@@ -307,6 +307,35 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
+
+                        composable("confirm_meds") {
+                            val context = LocalContext.current
+
+                            // Permission state handler
+                            val cameraPermissionLauncher = rememberLauncherForActivityResult(
+                                ActivityResultContracts.RequestPermission()
+                            ) { isGranted ->
+                                if (!isGranted) {
+                                    Toast.makeText(context, "Camera permission is required to verify medication", Toast.LENGTH_SHORT).show()
+                                    navController.popBackStack()
+                                }
+                            }
+
+                            // Request permission as soon as we enter this route
+                            LaunchedEffect(Unit) {
+                                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                            }
+
+                            ConfirmMedicationScreen(
+                                onBack = { navController.popBackStack() },
+                                onConfirm = {
+                                    // Logic for when the user clicks the shutter button
+                                    navController.popBackStack()
+                                    Toast.makeText(context, "Medication Verified!", Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        }
+
                     }
                 }
             }
