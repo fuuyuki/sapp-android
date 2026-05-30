@@ -75,6 +75,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("OPEN_SCREEN", "medlogs")
         }
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent,

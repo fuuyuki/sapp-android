@@ -14,7 +14,10 @@ import retrofit2.converter.gson.GsonConverterFactory
 import com.example.sapp.data.local.dataStore
 
 class AuthInterceptor(private val context: Context) : Interceptor {
+    private val appContext = context.applicationContext
+
     override fun intercept(chain: Interceptor.Chain): okhttp3.Response {
+
         val tokenKey = stringPreferencesKey("jwt_token")
         val token = runBlocking { context.dataStore.data.first()[tokenKey] }
 
@@ -32,6 +35,8 @@ object RetrofitClient {
         val client = OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor(context))
             .addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY })
+            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
             .build()
 
         return Retrofit.Builder()
