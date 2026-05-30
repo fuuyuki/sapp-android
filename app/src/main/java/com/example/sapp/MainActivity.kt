@@ -1,6 +1,7 @@
 package com.example.sapp
 
 import android.Manifest
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -8,6 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -33,13 +35,14 @@ import com.example.sapp.ui.theme.MedicalAppTheme
 import java.util.*
 
 
-class MainActivity : ComponentActivity() {
-
+//class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity(){
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val apiService = RetrofitClient.getApiService(this)
         val repository = AppRepository(apiService)
         val viewModel = MainViewModel(repository, this)
+//        val viewModel = androidx.lifecycle.ViewModelProvider(this, MainViewModelFactory(repository, this))[MainViewModel.class.java]
 
         setContent {
             MedicalAppTheme{
@@ -75,6 +78,11 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(Unit) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                    val startScreen = intent.getStringExtra("OPEN_SCREEN")
+
+                    if (startScreen == "medlogs") {
+                        navController.navigate("medlogs")
                     }
                 }
 
@@ -136,6 +144,7 @@ class MainActivity : ComponentActivity() {
                                     CaretakerDashboardScreen(
                                         user = userProfile,
                                         caretakerId = userId ?: UUID.randomUUID(),
+                                        mainViewModel = viewModel,
                                         viewModel = caretakerViewModel,
                                         onNavigateToPatientDetails = { patient ->
                                             navController.navigate("patient_details/${patient.id}")
@@ -151,6 +160,7 @@ class MainActivity : ComponentActivity() {
                                     PatientDashboardScreen(
                                         user = userProfile,
                                         adherence = adherenceSummary,
+                                        viewModel = viewModel,
                                         onNavigateToDevices = { navController.navigate("devices") },
                                         onNavigateToSchedules = { navController.navigate("schedules") },
                                         onNavigateToMedlogs = { navController.navigate("medlogs") },
@@ -342,6 +352,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+class MainViewModelFactory(private val repo: AppRepository, private val context: Context) : androidx.lifecycle.ViewModelProvider.Factory {
+    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+        return MainViewModel(repo, context) as T
+    }
+}
+
 @Composable
 fun LogoutConfirmationDialog(
     onConfirm: () -> Unit,

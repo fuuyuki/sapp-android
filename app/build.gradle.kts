@@ -45,7 +45,7 @@ dependencies {
     // Java 8+ API support for older Android versions
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
-    // AndroidX & Compose (Using BOM to manage versions)
+    // AndroidX & Compose
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -56,12 +56,15 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.extended)
 
-    // Navigation (REMOVED DUPLICATE AND OLD VERSION)
-    // Use the version from your libs.versions.toml or specify ONE here
+    // AppCompat for language switching/Theme support
+    implementation("androidx.appcompat:appcompat:1.7.1")
+
+
+    // Navigation
     implementation(libs.androidx.navigation.compose)
 
-    // Retrofit + JSON (Consider moving versions to libs.versions.toml later)
-    implementation("com.squareup.retrofit2:retrofit:2.11.0") // Updated to 2.11.0
+    // Retrofit + JSON
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 
     // OkHttp
@@ -72,7 +75,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
 
-    // Lifecycle (Cleaned up duplicates)
+    // Lifecycle
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
 
@@ -83,7 +86,7 @@ dependencies {
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
 
-    // Firebase (Using BOM is correct)
+    // Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
     implementation("com.google.firebase:firebase-messaging-ktx")
 
