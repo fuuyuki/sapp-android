@@ -12,10 +12,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.rememberCoroutineScope
+import com.example.sapp.R
 import com.example.sapp.data.model.AdherenceSummaryResponse
 import com.example.sapp.data.model.UserOut
+import com.example.sapp.ui.components.LanguageSelector
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
@@ -26,6 +29,7 @@ import java.util.*
 fun PatientDashboardScreen(
     user: UserOut?,
     adherence: AdherenceSummaryResponse?,
+    viewModel: MainViewModel,
     onNavigateToDevices: () -> Unit,
     onNavigateToSchedules: () -> Unit,
     onNavigateToMedlogs: () -> Unit,
@@ -37,6 +41,7 @@ fun PatientDashboardScreen(
     var backPressedOnce by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    val currentLang by viewModel.currentLanguage.collectAsState()
 
     // Intercept back press
     BackHandler {
@@ -45,7 +50,7 @@ fun PatientDashboardScreen(
         } else {
             backPressedOnce = true
             scope.launch {
-                snackbarHostState.showSnackbar("Press back again to exit")
+                snackbarHostState.showSnackbar("Tekan sekali lagi untuk keluar")
             }
             scope.launch {
                 delay(2000)
@@ -67,13 +72,18 @@ fun PatientDashboardScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { /* TODO: Profile */ }) {
-                        Icon(
-                            Icons.Default.AccountCircle,
-                            contentDescription = "Profile",
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
+//                    IconButton(onClick = { /* TODO: Profile */ }) {
+//                        Icon(
+//                            Icons.Default.AccountCircle,
+//                            contentDescription = "Profile",
+//                            tint = MaterialTheme.colorScheme.onPrimary
+//                        )
+//                    }
+                    // ✅ Add the Language Selector
+                    LanguageSelector(
+                        currentLanguage = currentLang,
+                        onLanguageChange = { lang -> viewModel.changeLanguage(lang) }
+                    )
                 },
                 actions = {
                     IconButton(onClick = onLogout) {
@@ -98,19 +108,19 @@ fun PatientDashboardScreen(
                     selected = false,
                     onClick = onNavigateToDevices,
                     icon = { Icon(Icons.Default.Devices, contentDescription = null) },
-                    label = { Text("Devices") }
+                    label = { Text(stringResource(R.string.devices)) }
                 )
                 NavigationBarItem(
                     selected = false,
                     onClick = onNavigateToConfirmMeds,
                     icon = { Icon(Icons.Default.Medication, contentDescription = null) },
-                    label = { Text("Confirm Meds") }
+                    label = { Text(stringResource(R.string.confirm_meds)) }
                 )
                 NavigationBarItem(
                     selected = false,
                     onClick = onNavigateToMedlogs,
                     icon = { Icon(Icons.Default.History, contentDescription = null) },
-                    label = { Text("Logs") }
+                    label = { Text(stringResource(R.string.medication_logs)) }
                 )
             }
         }

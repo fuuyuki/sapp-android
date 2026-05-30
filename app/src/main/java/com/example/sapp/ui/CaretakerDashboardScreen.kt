@@ -17,8 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.example.sapp.R
 import com.example.sapp.AppRepository
 import com.example.sapp.data.model.UserOut
+import com.example.sapp.ui.components.LanguageSelector
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -53,6 +56,7 @@ class CaretakerDashboardViewModel(
 fun CaretakerDashboardScreen(
     user: UserOut?,
     caretakerId: UUID,
+    mainViewModel: MainViewModel,
     viewModel: CaretakerDashboardViewModel,
     onNavigateToPatientDetails: (UserOut) -> Unit,
     onNavigateToAddMeds: (UUID) -> Unit, // new callback
@@ -61,6 +65,7 @@ fun CaretakerDashboardScreen(
     val currentDate = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault()).format(Date())
     val patients by viewModel.patients.collectAsState()
     var showPatientSelector by remember { mutableStateOf(false) }
+    val currentLang by mainViewModel.currentLanguage.collectAsState()
 
     // Load patients when screen starts
     LaunchedEffect(caretakerId) {
@@ -70,7 +75,21 @@ fun CaretakerDashboardScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("SApp Health - Caretaker", color = MaterialTheme.colorScheme.onPrimary) },
+                title = {
+                    Text(
+                        "SApp Health",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                },
+                navigationIcon = {
+                    // ✅ Add the Language Selector
+                    LanguageSelector(
+                        currentLanguage = currentLang,
+                        onLanguageChange = { lang -> mainViewModel.changeLanguage(lang) }
+                    )
+                },
                 actions = {
                     IconButton(onClick = { viewModel.loadPatients(caretakerId) }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = MaterialTheme.colorScheme.onPrimary)
@@ -91,13 +110,13 @@ fun CaretakerDashboardScreen(
                     selected = true,
                     onClick = { /* Dashboard stays here */ },
                     icon = { Icon(Icons.Default.Home, contentDescription = null) },
-                    label = { Text("Dashboard") }
+                    label = { Text(stringResource(R.string.dashboard)) }
                 )
                 NavigationBarItem(
                     selected = false,
                     onClick = { showPatientSelector = true },
                     icon = { Icon(Icons.Default.Medication, contentDescription = null) },
-                    label = { Text("Add Meds") }
+                    label = { Text(stringResource(R.string.add_medication)) }
                 )
             }
         }
@@ -108,7 +127,7 @@ fun CaretakerDashboardScreen(
         ) {
             WelcomeBanner(user, currentDate)
 
-            Text("Your Patients", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.your_patients), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
             LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(patients) { patient ->

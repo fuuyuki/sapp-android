@@ -13,9 +13,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.sapp.data.model.ScheduleOut
+import com.example.sapp.R
 import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,7 +34,7 @@ fun ScheduleScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        "Medication Schedules",
+                        stringResource(R.string.schedules),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimary
@@ -80,7 +82,7 @@ fun ScheduleScreen(
                         tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)
                     )
                     Spacer(Modifier.height(16.dp))
-                    Text("No schedules found", style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.no_schedules), style = MaterialTheme.typography.bodyLarge)
                 }
             }
         } else {
@@ -173,13 +175,13 @@ fun ScheduleCard(
 
 fun formatRepeatDays(repeatDays: Int): String {
     if (repeatDays == 127) {
-        return "Everyday"
+        return "Setiap hari"
     }
     if (repeatDays == 0) {
         return "Does not repeat"
     }
 
-    val days = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+    val days = listOf("Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab")
     val selectedDays = mutableListOf<String>()
 
     days.forEachIndexed { index, day ->

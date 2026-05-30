@@ -17,6 +17,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.launch
@@ -79,7 +80,7 @@ fun LoginScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CircularProgressIndicator()
                         Spacer(Modifier.height(16.dp))
-                        Text("Checking Session...", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.session_check), style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }
@@ -100,12 +101,12 @@ fun LoginScreen(
                     )
 
                     Text(
-                        "Welcome Back",
+                        stringResource(R.string.welcome_back),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        "Please sign in to continue",
+                        stringResource(R.string.login_message),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -113,7 +114,7 @@ fun LoginScreen(
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
-                        label = { Text("Email Address") },
+                        label = { Text(stringResource(R.string.email_address)) },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
                     )
@@ -121,7 +122,7 @@ fun LoginScreen(
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
-                        label = { Text("Password") },
+                        label = { Text(stringResource(R.string.password)) },
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -135,11 +136,12 @@ fun LoginScreen(
                         }
                     )
 
+                    val fieldMsg = stringResource(R.string.please_fill_in_all_fields)
                     Button(
                         onClick = {
                             if (email.isBlank() || password.isBlank()) {
                                 scope.launch {
-                                    snackbarHostState.showSnackbar("Please fill in all fields")
+                                    snackbarHostState.showSnackbar(fieldMsg)
                                 }
                             } else {
                                 viewModel.login(email, password)
@@ -147,11 +149,11 @@ fun LoginScreen(
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Sign In")
+                        Text(stringResource(R.string.sign_in))
                     }
 
                     TextButton(onClick = onNavigateToRegister) {
-                        Text("Don’t have an account? Sign Up")
+                        Text(stringResource(R.string.don_t_have_an_account))
                     }
 
                     if (authState is AuthState.LoggingIn) {

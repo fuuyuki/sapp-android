@@ -18,10 +18,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.res.stringResource
+import com.example.sapp.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,7 +54,7 @@ fun ConfirmMedicationScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        "Verify Medication",
+                        stringResource(R.string.verify_meds),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimary
@@ -126,7 +129,7 @@ fun ConfirmMedicationScreen(
                     shape = MaterialTheme.shapes.medium
                 ) {
                     Text(
-                        text = "Please ensure your face and the medication are visible in the frame.",
+                        text = stringResource(R.string.camera_instruction),
                         modifier = Modifier.padding(16.dp),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White,

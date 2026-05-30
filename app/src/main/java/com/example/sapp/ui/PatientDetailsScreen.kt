@@ -11,8 +11,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.example.sapp.R
 import com.example.sapp.data.model.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -70,7 +73,7 @@ fun PatientDetailsScreen(
             HealthSnapshot(adherence)
 
             // ✅ Devices list
-            Text("Devices", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.devices), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             if (devices.isEmpty()) {
                 Text("No devices assigned", style = MaterialTheme.typography.bodyMedium)
             } else {
@@ -80,7 +83,7 @@ fun PatientDetailsScreen(
             }
 
             // ✅ Schedules list
-            Text("Schedules", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.schedules), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             if (schedules.isEmpty()) {
                 Text("No schedules found", style = MaterialTheme.typography.bodyMedium)
             } else {
@@ -94,7 +97,7 @@ fun PatientDetailsScreen(
             }
 
             // ✅ Medlogs list
-            Text("Medication Logs", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.medication_logs), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             if (medlogs.isEmpty()) {
                 Text("No medication logs available", style = MaterialTheme.typography.bodyMedium)
             } else {
@@ -148,7 +151,7 @@ fun DeviceCard_Patient(device: DeviceOut) {
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    "Last seen: $formattedDate",
+                    stringResource(R.string.last_seen) + "$formattedDate",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

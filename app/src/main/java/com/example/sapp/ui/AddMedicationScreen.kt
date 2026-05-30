@@ -13,9 +13,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.res.stringResource
+import com.example.sapp.R
 import com.example.sapp.data.model.ScheduleOut
 import java.util.Calendar
 
@@ -57,7 +60,7 @@ fun AddMedicationScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        if (initialSchedule == null) "Add Medication" else "Edit Medication",
+                        if (initialSchedule == null) stringResource(R.string.add_medication) else stringResource(R.string.edit),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimary
@@ -86,7 +89,7 @@ fun AddMedicationScreen(
             OutlinedTextField(
                 value = pillName,
                 onValueChange = { pillName = it },
-                label = { Text("Medication Name") },
+                label = { Text(stringResource(R.string.medication_name)) },
                 placeholder = { Text("e.g. Paracetamol") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
@@ -96,7 +99,7 @@ fun AddMedicationScreen(
             OutlinedTextField(
                 value = formattedTime,
                 onValueChange = {},
-                label = { Text("Dose Time") },
+                label = { Text(stringResource(R.string.dose_time)) },
                 readOnly = true,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -113,7 +116,7 @@ fun AddMedicationScreen(
             // Days Selector
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "Repeat on Days",
+                    stringResource(R.string.repeat_days),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary
@@ -161,7 +164,7 @@ fun AddMedicationScreen(
                 enabled = pillName.isNotBlank() && selectedDays.isNotEmpty()
             ) {
                 Text(
-                    if (initialSchedule == null) "Save Medication" else "Update Medication",
+                    if (initialSchedule == null) stringResource(R.string.save) else stringResource(R.string.update),
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                 )
             }

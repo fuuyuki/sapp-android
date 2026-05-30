@@ -16,7 +16,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.sapp.R
 import com.example.sapp.data.model.AdherenceSummaryResponse
 import com.example.sapp.data.model.UserOut
 import kotlinx.coroutines.launch
@@ -102,19 +104,19 @@ fun DashboardScreen(
                     selected = false,
                     onClick = onNavigateToDevices,
                     icon = { Icon(Icons.Default.Devices, contentDescription = null) },
-                    label = { Text("Devices") }
+                    label = { Text(stringResource(R.string.devices)) }
                 )
                 NavigationBarItem(
                     selected = false,
                     onClick = onNavigateToAddMeds,
                     icon = { Icon(Icons.Default.Medication, contentDescription = null) },
-                    label = { Text("Add Meds") }
+                    label = { Text(stringResource(R.string.add_medication)) }
                 )
                 NavigationBarItem(
                     selected = false,
                     onClick = onNavigateToMedlogs,
                     icon = { Icon(Icons.Default.History, contentDescription = null) },
-                    label = { Text("Logs") }
+                    label = { Text(stringResource(R.string.medication_logs)) }
                 )
             }
         }
@@ -146,7 +148,7 @@ fun WelcomeBanner(user: UserOut?, currentDate: String) {
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
-                text = "Welcome, ${user?.name ?: "Loading..."}",
+                text = stringResource(R.string.welcome_user, user?.name ?: "???"),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimary
@@ -187,7 +189,7 @@ fun HealthSnapshot(adherence: AdherenceSummaryResponse?) {
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    "Weekly Adherence",
+                    stringResource(R.string.health_snapshot),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -216,7 +218,7 @@ fun HealthSnapshot(adherence: AdherenceSummaryResponse?) {
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        "Next Dose: ${adherence?.next_dose?.next_dose ?: "--:--"}",
+                        stringResource(R.string.next_dose) + ": ${adherence?.next_dose?.next_dose ?: "--:--"}",
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -251,9 +253,9 @@ fun HealthSnapshot(adherence: AdherenceSummaryResponse?) {
 @Composable
 fun ServicesList(onDevices: () -> Unit, onSchedules: () -> Unit, onMedlogs: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        ServiceCard("My Devices", "Manage connected devices", Icons.Default.Devices, onDevices)
-        ServiceCard("Schedules", "View and edit medication schedules", Icons.Default.Schedule, onSchedules)
-        ServiceCard("Medlogs", "Review your medication history", Icons.Default.History, onMedlogs)
+        ServiceCard(stringResource(R.string.devices), stringResource(R.string.devices_subtitle), Icons.Default.Devices, onDevices)
+        ServiceCard(stringResource(R.string.schedules), stringResource(R.string.schedules_subtitle), Icons.Default.Schedule, onSchedules)
+        ServiceCard(stringResource(R.string.medication_logs), stringResource(R.string.medlogs_subtitle), Icons.Default.History, onMedlogs)
     }
 }
 
