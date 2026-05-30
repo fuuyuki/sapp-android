@@ -1,0 +1,72 @@
+<resources>
+    <string name="app_name">SApp Health</string>
+
+    <!-- General -->
+    <string name="back">Kembali</string>
+    <string name="cancel">Batal</string>
+    <string name="save">Simpan</string>
+    <string name="refresh">Segarkan</string>
+    <string name="logout">Keluar</string>
+    <string name="edit">Ubah</string>
+    <string name="update">Update</string>
+    <string name="delete">Hapus</string>
+    <string name="ok">OK</string>
+
+    <!-- Login/Register -->
+    <string name="session_check">Memeriksa Sesi…, &#8230;</string>
+    <string name="welcome_back">Selamat Datang</string>
+    <string name="login_message">Silakan login untuk melanjutkan</string>
+    <string name="email_address">Alamat Email</string>
+    <string name="password">Kata Sandi</string>
+    <string name="please_fill_in_all_fields">Tolong isi semua kolom</string>"
+    <string name="sign_in">Masuk</string>
+    <string name="don_t_have_an_account">Belum punya akun?</string>
+    <string name="sign_up">Daftar</string>"
+    <string name="create_account">Buat Akun</string>
+    <string name="please_fill_in_the_details_to_register">Isi informasi berikut untuk mendaftar</string>"
+    <string name="name">Nama</string>
+    <string name="role">Peran</string>
+    <string name="registration_successful">Registrasi berhasil! Silakan masuk.</string>"
+    <string name="already_have_an_account">Sudah punya akun? Login disini</string>"
+
+    <!-- Dashboard Common -->
+    <string name="welcome_user">Halo, %1$s</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="devices">Perangkat Saya</string>
+    <string name="devices_subtitle">Periksa dan kelola perangkat Anda</string>
+    <string name="schedules">Jadwal</string>
+    <string name="schedules_subtitle">Cek jadwal minum obat Anda</string>
+    <string name="medication_logs">Riwayat Minum</string>
+    <string name="medlogs_subtitle">Tinjau riwayat minum obat Anda</string>
+    <string name="no_schedules">Tidak ada jadwal yang ditemukan</string>"
+    <string name="days">hari</string>
+    <string name="taken">DIMINUM</string>
+    <string name="missed">TERLEWAT</string>
+    <string name="repeats">Diminum</string>
+    <string name="everyday">Setiap hari</string>
+
+    <!-- Patient Specific -->
+    <string name="confirm_meds">Konfirmasi Minum</string>
+    <string name="verify_meds">Verifikasi Pengobatan</string>
+    <string name="camera_instruction">Pastikan wajah Anda dan obat terlihat dalam frame.</string>
+    <string name="health_snapshot">Ringkasan Kepatuhan</string>
+    <string name="next_dose">Jadwal Berikutnya</string>
+
+    <!-- Caretaker Specific -->
+    <string name="caretaker_dashboard">Caretaker SApp</string>
+    <string name="your_patients">Pasien Anda</string>
+    <string name="add_medication">Tambah Obat</string>
+    <string name="select_patient">Pilih Pasien</string>
+    <string name="patient_details">Detail Pasien</string>
+    <string name="no_patients">Tidak ada pasien yang terdaftar.</string>
+
+    <!-- Add Medication Menu -->
+    <string name="medication_name">Nama Obat</string>
+    <string name="dose_time">Waktu Minum</string>
+    <string name="repeat_days">Hari Minum</string>
+
+    <!-- Device Status -->
+    <string name="last_seen">Terakhir terlihat: %1$s</string>
+    <string name="online">Online</string>
+    <string name="offline">Offline</string>
+</resources>
