@@ -1,26 +1,28 @@
 package com.example.sapp.ui
 
 import android.content.Context
-import androidx.compose.ui.semantics.role
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.os.LocaleListCompat
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.sapp.data.model.*
 import com.example.sapp.AppRepository
 import com.example.sapp.data.local.dataStore
+import com.example.sapp.data.model.*
 import com.example.sapp.ui.state.AuthState
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.UUID
 
 class MainViewModel(
     private val repository: AppRepository,
-    private val context: Context,
+    context: Context,
 ) : ViewModel() {
+
+    // Use applicationContext to avoid leaking Activity context
+    private val appContext = context.applicationContext
 
     val devices = MutableStateFlow<List<DeviceOut>>(emptyList())
     val schedules = MutableStateFlow<List<ScheduleOut>>(emptyList())
@@ -29,8 +31,43 @@ class MainViewModel(
     val adherenceSummary = MutableStateFlow<AdherenceSummaryResponse?>(null)
     val errorMessage = MutableStateFlow<String?>(null)
 
+    private val languageKey = stringPreferencesKey("app_language")
+    private val tokenKey = stringPreferencesKey("jwt_token")
+
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState
+
+    private val _currentUserId = MutableStateFlow<UUID?>(null)
+    val userId: StateFlow<UUID?> = _currentUserId.asStateFlow()
+
+    private val _userRole = MutableStateFlow<String?>(null)
+    val userRole: StateFlow<String?> = _userRole.asStateFlow()
+
+    val selectedPatient = MutableStateFlow<UserOut?>(null)
+    val patients = MutableStateFlow<List<UserOut>>(emptyList())
+
+    // --- Language State ---
+    val currentLanguage: StateFlow<String> = appContext.dataStore.data
+        .map { it[languageKey] ?: "id" }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "id")
+
+    init {
+        // Apply saved language on startup
+        viewModelScope.launch {
+            try {
+                val savedLang = appContext.dataStore.data.first()[languageKey] ?: "id"
+                val currentLocales = AppCompatDelegate.getApplicationLocales()
+
+                if (currentLocales.toLanguageTags() != savedLang) {
+                    val appLocale = LocaleListCompat.forLanguageTags(savedLang)
+                    AppCompatDelegate.setApplicationLocales(appLocale)
+                }
+            } catch (_: Exception) {
+                // Ignore initialization errors
+            }
+        }
+        checkSession()
+    }
 
     fun setAuthError(message: String) {
         _authState.value = AuthState.Error(message)
@@ -40,19 +77,6 @@ class MainViewModel(
         _authState.value = AuthState.SessionReady
     }
 
-    private val _currentUserId = MutableStateFlow<UUID?>(null)
-    val userId: StateFlow<UUID?> = _currentUserId.asStateFlow()
-    private val _userRole = MutableStateFlow<String?>(null)
-    val userRole: StateFlow<String?> = _userRole.asStateFlow()
-    val selectedPatient = MutableStateFlow<UserOut?>(null)
-    val patients = MutableStateFlow<List<UserOut>>(emptyList())
-
-    private val tokenKey = stringPreferencesKey("jwt_token")
-
-    init {
-        checkSession()
-    }
-
     fun checkSession() {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
@@ -60,19 +84,30 @@ class MainViewModel(
                 val meResponse = repository.getMe()
                 _currentUserId.value = meResponse.user_id
 
-                // Fetch the full user object to get the role
                 val user = repository.getUser(meResponse.user_id)
-                _userRole.value = user.role // Now this works!
+                _userRole.value = user.role
                 userProfile.value = user
 
                 refreshDashboard()
                 _authState.value = AuthState.SessionReady
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 _authState.value = AuthState.Idle
             }
         }
     }
 
+    fun changeLanguage(languageCode: String) {
+        viewModelScope.launch {
+            try {
+                // 1. Save to DataStore
+                appContext.dataStore.edit { it[languageKey] = languageCode }
+                // 2. Apply globally across the app
+                val appLocale = LocaleListCompat.forLanguageTags(languageCode)
+                AppCompatDelegate.setApplicationLocales(appLocale)
+            } catch (_: Exception) {
+            }
+        }
+    }
 
     fun login(email: String, pass: String) {
         viewModelScope.launch {
@@ -81,22 +116,26 @@ class MainViewModel(
                 val response = repository.login(email, pass)
                 if (response.isSuccessful) {
                     response.body()?.access_token?.let { token ->
-                        context.dataStore.edit { it[tokenKey] = token }
-                        _authState.value = AuthState.Success
+                        appContext.dataStore.edit { it[tokenKey] = token }
 
                         try {
                             val meResponse = repository.getMe()
                             _currentUserId.value = meResponse.user_id
-                            // ✅ set role here
                             val user = repository.getUser(meResponse.user_id)
-                            _userRole.value = user.role // "patient" or "caretaker"
+                            _userRole.value = user.role
                             userProfile.value = user
 
+                            com.google.firebase.messaging.FirebaseMessaging.getInstance().token
+                                .addOnCompleteListener { task ->
+                                    if (task.isSuccessful) {
+                                        val token = task.result
+                                        registerFcmToken(token)
+                                    }
+                                }
                             refreshDashboard()
-                            _authState.value = AuthState.Success
                             _authState.value = AuthState.SessionReady
                         } catch (e: Exception) {
-                            setAuthError("Login successful but failed to get user ID: ${e.message}")
+                            setAuthError("Login successful but failed to get user data: ${e.message}")
                         }
                     } ?: setAuthError("No token received")
                 } else {
@@ -107,8 +146,6 @@ class MainViewModel(
             }
         }
     }
-
-
 
     fun register(name: String, email: String, pass: String, role: String) {
         viewModelScope.launch {
@@ -126,14 +163,12 @@ class MainViewModel(
         }
     }
 
-
-    fun registerFcmToken(token: String) {
-        val userId = _currentUserId.value ?: return
+    fun registerFcmToken(fcmToken: String) {
+        val uId = _currentUserId.value ?: return
         viewModelScope.launch {
             try {
-                val response = repository.registerToken(userId, token)
+                val response = repository.registerToken(uId, fcmToken)
                 if (response.isSuccessful) {
-                    // Token registered successfully → session is ready
                     setSessionReady()
                 } else {
                     setAuthError("Failed to register FCM token: ${response.code()}")
@@ -144,50 +179,55 @@ class MainViewModel(
         }
     }
 
-
-
-    fun loadUserProfile(userId: UUID) {
+    fun loadUserProfile(uId: UUID) {
         viewModelScope.launch {
             try {
-                userProfile.value = repository.getUser(userId)
+                userProfile.value = repository.getUser(uId)
             } catch (e: Exception) {
                 errorMessage.value = "Failed to load profile: ${e.localizedMessage}"
             }
         }
     }
 
-    fun loadAdherenceSummary(userId: UUID) {
+    fun loadAdherenceSummary(uId: UUID) {
         viewModelScope.launch {
             try {
-                adherenceSummary.value = repository.getAdherenceSummary(userId)
-            } catch (e: Exception) {
-                // Ignore or log error
+                adherenceSummary.value = repository.getAdherenceSummary(uId)
+            } catch (_: Exception) {
             }
         }
     }
 
-    // Applied role-based filtering for devices
-    fun loadDevices(userId: UUID, role: String) {
+    fun loadDevices(uId: UUID, role: String) {
         viewModelScope.launch {
             try {
                 val result: List<DeviceOut> = when (role) {
-                    "patient" -> repository.getDevicesByPatient(userId)      // returns List<DeviceOut>
-                    "caretaker" -> repository.getDevicesByCaretaker(userId)  // returns List<DeviceOut>
-                    else -> repository.getDevices(userId)              // fallback, also List<DeviceOut>
+                    "patient" -> repository.getDevicesByPatient(uId)
+                    "caretaker" -> repository.getDevicesByCaretaker(uId)
+                    else -> repository.getDevices(uId)
                 }
                 devices.value = result
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 devices.value = emptyList()
             }
         }
     }
 
-    // Data loader for a specific patient (Caretaker feature)
+    fun loadPatients() {
+        val caretakerId = _currentUserId.value ?: return
+        if (_userRole.value != "caretaker") return
+        viewModelScope.launch {
+            try {
+                patients.value = repository.getPatientsByCaretaker(caretakerId)
+            } catch (_: Exception) {
+                patients.value = emptyList()
+            }
+        }
+    }
+
     fun loadPatientData(patientId: UUID) {
-        // Get the logged-in caretaker's ID
         val caretakerId = _currentUserId.value ?: return
 
-        // ✅ 1. IMMEDIATELY clear the old data so the UI shows a clean state/loading
         selectedPatient.value = null
         devices.value = emptyList()
         schedules.value = emptyList()
@@ -195,62 +235,55 @@ class MainViewModel(
         adherenceSummary.value = null
 
         viewModelScope.launch {
-            // 1. Load the basic profile first (essential)
             try {
                 selectedPatient.value = repository.getUser(patientId)
                 loadAdherenceSummary(patientId)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 errorMessage.value = "Failed to load patient profile"
             }
 
-            // 2. Load Devices (Independent)
             try {
                 devices.value = repository.getDevicesByPatient(patientId)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 devices.value = emptyList()
             }
 
-            // 3. Load Schedules (Independent)
             try {
                 schedules.value = repository.getSchedulesForPatient(caretakerId, patientId)
-            } catch (e: Exception) {
-                // Backend might return 404 if no schedules exist, treat as empty
+            } catch (_: Exception) {
                 schedules.value = emptyList()
             }
 
-            // 4. Load Medlogs (Independent)
             try {
                 medlogs.value = repository.getMedlogsByCaretakerForPatient(caretakerId, patientId)
-            } catch (e: Exception) {
-                // Backend might return 404 if no logs exist, treat as empty
+            } catch (_: Exception) {
                 medlogs.value = emptyList()
             }
         }
     }
 
-
-    fun loadSchedules(userId: UUID) {
+    fun loadSchedules(uId: UUID) {
         viewModelScope.launch {
             try {
-                schedules.value = repository.getSchedules(userId)
-            } catch (e: Exception) {
+                schedules.value = repository.getSchedules(uId)
+            } catch (_: Exception) {
                 schedules.value = emptyList()
             }
         }
     }
 
-    fun loadMedlogs(userId: UUID) {
+    fun loadMedlogs(uId: UUID) {
         viewModelScope.launch {
             try {
-                medlogs.value = repository.getMedlogs(userId)
-            } catch (e: Exception) {
+                medlogs.value = repository.getMedlogs(uId)
+            } catch (_: Exception) {
                 medlogs.value = emptyList()
             }
         }
     }
 
     fun createSchedule(pillname: String, doseTime: String, repeatDays: Int, onSuccess: () -> Unit) {
-        val userId = _currentUserId.value ?: return
+        val uId = _currentUserId.value ?: return
         val deviceId = devices.value.firstOrNull()?.chip_id ?: "DEFAULT_CHIP"
 
         viewModelScope.launch {
@@ -259,10 +292,10 @@ class MainViewModel(
                     pillname = pillname,
                     dose_time = doseTime,
                     repeat_days = repeatDays,
-                    patient_id = userId,
+                    patient_id = uId,
                     device_id = deviceId
                 )
-                repository.createSchedule(userId, request)
+                repository.createSchedule(uId, request)
                 refreshDashboard()
                 onSuccess()
             } catch (e: Exception) {
@@ -276,12 +309,11 @@ class MainViewModel(
         pillname: String,
         doseTime: String,
         repeatDays: Int,
-        deviceId: String, // Add this parameter
+        deviceId: String = "DEFAULT_CHIP",
         onSuccess: () -> Unit
     ) {
         viewModelScope.launch {
             try {
-                // No longer hardcoded to "DEFAULT_CHIP"
                 val request = ScheduleRequest(pillname, doseTime, repeatDays, patientId, deviceId)
                 repository.createSchedule(patientId, request)
                 onSuccess()
@@ -301,7 +333,6 @@ class MainViewModel(
 
                 repository.updateSchedule(scheduleId, update)
 
-                // ✅ FIX: Context-aware refresh
                 val pId = selectedPatient.value?.id
                 if (pId != null) {
                     loadPatientData(pId)
@@ -321,54 +352,48 @@ class MainViewModel(
             try {
                 val response = repository.deleteSchedule(scheduleId)
                 if (response.isSuccessful) {
-                    // ✅ FIX: Check if we are in "Patient Detail" mode
                     val pId = selectedPatient.value?.id
                     if (pId != null) {
-                        loadPatientData(pId) // Reload the specific patient
+                        loadPatientData(pId)
                     } else {
-                        refreshDashboard()   // Reload own dashboard (for patients)
+                        refreshDashboard()
                     }
-                } else {
-                    errorMessage.value = "Failed to delete schedule"
                 }
             } catch (e: Exception) {
-                errorMessage.value = "Error: ${e.localizedMessage}"
-            }
-        }
-    }
-
-
-    //  Schedule creation for a specific patient (Caretaker feature)
-    fun createScheduleForPatient(patientId: UUID, pillname: String, doseTime: String, repeatDays: Int, onSuccess: () -> Unit) {
-        viewModelScope.launch {
-            try {
-                val deviceId = "DEFAULT_CHIP" // Or fetch from devices list
-                val request = ScheduleRequest(pillname, doseTime, repeatDays, patientId, deviceId)
-                repository.createSchedule(patientId, request)
-                onSuccess()
-            } catch (e: Exception) {
-                errorMessage.value = e.message
+                errorMessage.value = "Delete failed: ${e.localizedMessage}"
             }
         }
     }
 
     fun refreshDashboard() {
         _currentUserId.value?.let { id ->
+            val role = userRole.value ?: "patient"
             loadUserProfile(id)
-            loadDevices(id, userRole.value ?: "patient")
+            loadDevices(id, role)
             loadAdherenceSummary(id)
             loadSchedules(id)
             loadMedlogs(id)
+            if (role == "caretaker") {
+                loadPatients()
+            }
         }
     }
 
     fun logout() {
-        _currentUserId.value = null
-        _authState.value = AuthState.Idle
-        userProfile.value = null
-        devices.value = emptyList()
-        schedules.value = emptyList()
-        medlogs.value = emptyList()
-        adherenceSummary.value = null
+        viewModelScope.launch {
+            try {
+                appContext.dataStore.edit { it.remove(tokenKey) }
+            } catch (_: Exception) {
+            }
+            _currentUserId.value = null
+            _userRole.value = null
+            _authState.value = AuthState.Idle
+            userProfile.value = null
+            devices.value = emptyList()
+            schedules.value = emptyList()
+            medlogs.value = emptyList()
+            selectedPatient.value = null
+            patients.value = emptyList()
+        }
     }
 }
