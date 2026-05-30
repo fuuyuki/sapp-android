@@ -1,3 +1,72 @@
 <resources>
-    <string name="app_name">SApp</string>
+    <string name="app_name">SApp Health</string>
+
+    <!-- General -->
+    <string name="back">Back</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="refresh">Refresh</string>
+    <string name="logout">Logout</string>
+    <string name="edit">Edit</string>
+    <string name="update">Update</string>
+    <string name="delete">Delete</string>
+    <string name="ok">OK</string>
+
+    <!-- Login/Register -->
+    <string name="session_check">Checking Session…, &#8230;</string>
+    <string name="welcome_back">Welcome Back</string>
+    <string name="login_message">Please sign in to continue</string>
+    <string name="email_address">Email Address</string>
+    <string name="password">Password</string>
+    <string name="please_fill_in_all_fields">Please fill in all fields</string>"
+    <string name="sign_in">Sign In</string>
+    <string name="don_t_have_an_account">Don’t have an account?</string>
+    <string name="sign_up">Sign Up</string>"
+    <string name="create_account">Create Account</string>
+    <string name="please_fill_in_the_details_to_register">Please fill in the details to register</string>"
+    <string name="name">Name</string>
+    <string name="role">Role</string>
+    <string name="registration_successful">Registration successful! Please log in.</string>"
+    <string name="already_have_an_account">Already have an account? Sign In</string>"
+
+    <!-- Dashboard Common -->
+    <string name="welcome_user">Welcome, %1$s</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="devices">My Devices</string>
+    <string name="devices_subtitle">Manage connected devices</string>
+    <string name="schedules">Schedules</string>
+    <string name="schedules_subtitle">View and edit medication schedules</string>
+    <string name="medication_logs">Medication Logs</string>
+    <string name="medlogs_subtitle">Review your medication history</string>
+    <string name="no_schedules">No schedules found</string>"
+    <string name="days">days</string>
+    <string name="taken">TAKEN</string>
+    <string name="missed">MISSED</string>
+    <string name="repeats">Repeats</string>
+    <string name="everyday">Everyday</string>
+
+    <!-- Patient Specific -->
+    <string name="confirm_meds">Confirm Meds</string>
+    <string name="verify_meds">Verify Medication</string>
+    <string name="camera_instruction">Please ensure your face and the medication are visible in the frame.</string>
+    <string name="health_snapshot">Health Snapshot</string>
+    <string name="next_dose">Next Dose</string>
+
+    <!-- Caretaker Specific -->
+    <string name="caretaker_dashboard">Caretaker SApp</string>
+    <string name="your_patients">Your Patients</string>
+    <string name="add_medication">Add Medication</string>
+    <string name="select_patient">Select Patient</string>
+    <string name="patient_details">Patient Details</string>
+    <string name="no_patients">No patients assigned.</string>
+
+    <!-- Add Medication Menu -->
+    <string name="medication_name">Medication Name</string>
+    <string name="dose_time">Dose Time</string>
+    <string name="repeat_days">Repeat on Days</string>
+
+    <!-- Device Status -->
+    <string name="last_seen">Last seen: %1$s</string>
+    <string name="online">Online</string>
+    <string name="offline">Offline</string>
 </resources>

@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.SApp" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Use Theme.AppCompat.DayNight.NoActionBar instead -->
+    <style name="Theme.SApp" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <!-- This is compatible with AppCompatActivity and won't be red -->
+        <item name="colorPrimary">#2196F3</item>
+    </style>
 </resources>
