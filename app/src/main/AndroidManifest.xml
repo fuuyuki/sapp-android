@@ -13,7 +13,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.SApp">
-        
+
         <service
             android:name=".service.MyFirebaseMessagingService"
             android:exported="false">
@@ -21,11 +21,28 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+        <!-- Set default notification icon and color (optional) -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@android:drawable/ic_dialog_info" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="fcm_default_channel" />
+
+        <service
+            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false"
+            android:exported="false">
+            <meta-data
+                android:name="autoStoreLocales"
+                android:value="true" />
+        </service>
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.SApp">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
