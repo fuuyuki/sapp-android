@@ -19,3 +19,14 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Gson DTOs are populated via reflection. Keep them if minification is enabled.
+-keep class com.example.sapp.data.model.** { *; }
+-keepattributes Signature
+-keepattributes *Annotation*
+-keepclassmembers,allowobfuscation class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
+
+# MediaPipe Tasks uses JNI; silence optional-class warnings if minification is enabled.
+-dontwarn com.google.mediapipe.**

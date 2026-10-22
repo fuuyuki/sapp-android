@@ -5,6 +5,27 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+// Versioning comes from CI (VERSION_NAME / VERSION_CODE) or, for local builds,
+// -PversionName=... -PversionCode=.... Defaults keep debug builds working.
+val appVersionCode: Int = providers.gradleProperty("versionCode").orNull?.toIntOrNull()
+    ?: providers.environmentVariable("VERSION_CODE").orNull?.toIntOrNull()
+    ?: 1
+val appVersionName: String = providers.gradleProperty("versionName").orNull
+    ?: providers.environmentVariable("VERSION_NAME").orNull
+    ?: "1.0.0"
+
+// Release signing is enabled only when all values are present and the keystore
+// exists. CI injects these; a local assembleRelease without them is unsigned.
+val releaseKeystorePath = providers.environmentVariable("SIGNING_KEYSTORE_PATH").orNull
+val releaseStorePassword = providers.environmentVariable("SIGNING_STORE_PASSWORD").orNull
+val releaseKeyAlias = providers.environmentVariable("SIGNING_KEY_ALIAS").orNull
+val releaseKeyPassword = providers.environmentVariable("SIGNING_KEY_PASSWORD").orNull
+val releaseKeystoreFile = releaseKeystorePath?.let { file(it) }
+val hasReleaseSigning = releaseKeystoreFile?.exists() == true &&
+    !releaseStorePassword.isNullOrBlank() &&
+    !releaseKeyAlias.isNullOrBlank() &&
+    !releaseKeyPassword.isNullOrBlank()
+
 android {
     namespace = "com.example.sapp"
     compileSdk = 36
@@ -13,19 +34,34 @@ android {
         applicationId = "com.example.sapp"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = releaseKeystoreFile
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     compileOptions {
@@ -38,6 +74,8 @@ android {
     }
     buildFeatures {
         compose = true
+        // Used by the future in-app update checker (BuildConfig.VERSION_NAME).
+        buildConfig = true
     }
     androidResources {
         // MediaPipe loads the .task model with AssetManager; keep it uncompressed.
