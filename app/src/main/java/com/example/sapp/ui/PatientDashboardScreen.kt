@@ -34,6 +34,7 @@ fun PatientDashboardScreen(
     onNavigateToSchedules: () -> Unit,
     onNavigateToMedlogs: () -> Unit,
     onNavigateToConfirmMeds: () -> Unit,
+    onCheckForUpdates: () -> Unit,
     onLogout: () -> Unit
 ) {
     val currentDate = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault()).format(Date())
@@ -86,6 +87,13 @@ fun PatientDashboardScreen(
                     )
                 },
                 actions = {
+                    IconButton(onClick = onCheckForUpdates) {
+                        Icon(
+                            Icons.Default.CloudDownload,
+                            contentDescription = stringResource(R.string.update_check_for_updates),
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
                     IconButton(onClick = onLogout) {
                         Icon(
                             Icons.AutoMirrored.Filled.Logout,

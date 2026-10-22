@@ -30,8 +30,10 @@ import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.lifecycleScope
 import com.example.sapp.ui.state.AuthState
 import com.example.sapp.ui.theme.MedicalAppTheme
+import com.example.sapp.update.UpdateManager
 import com.example.sapp.verification.DueDoseResolver
 import com.example.sapp.verification.MouthVerificationActivity
 import java.util.*
@@ -39,8 +41,11 @@ import java.util.*
 
 //class MainActivity : ComponentActivity() {
 class MainActivity : AppCompatActivity() {
+    private lateinit var updateManager: UpdateManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        updateManager = UpdateManager(this, lifecycleScope)
         val apiService = RetrofitClient.getApiService(this)
         val repository = AppRepository(apiService)
         val viewModel = MainViewModel(repository, this)
@@ -56,6 +61,7 @@ class MainActivity : AppCompatActivity() {
                 val errorMessage by viewModel.errorMessage.collectAsState()
                 val userRole by viewModel.userRole.collectAsState()
                 val userId by viewModel.userId.collectAsState()
+                val updateState by updateManager.state.collectAsState()
                 val scope = rememberCoroutineScope()
                 val context = LocalContext.current
                 var scheduleToEdit by remember { mutableStateOf<ScheduleOut?>(null) }
@@ -102,6 +108,14 @@ class MainActivity : AppCompatActivity() {
                         onDismiss = { showLogoutDialog = false }
                     )
                 }
+
+                UpdateDialog(
+                    state = updateState,
+                    onDismiss = { updateManager.dismiss() },
+                    onDownload = { updateManager.download() },
+                    onInstall = { updateManager.install() },
+                    onRetry = { updateManager.checkForUpdates() }
+                )
 
                 LaunchedEffect(errorMessage) {
                     errorMessage?.let {
@@ -154,6 +168,7 @@ class MainActivity : AppCompatActivity() {
                                         onNavigateToAddMeds = { patientId ->
                                             navController.navigate("add_meds/$patientId")
                                         },
+                                        onCheckForUpdates = { updateManager.checkForUpdates() },
                                         onLogout = { showLogoutDialog = true }
                                     )
                                 }
@@ -168,6 +183,7 @@ class MainActivity : AppCompatActivity() {
                                         onNavigateToSchedules = { navController.navigate("schedules") },
                                         onNavigateToMedlogs = { navController.navigate("medlogs") },
                                         onNavigateToConfirmMeds = { navController.navigate("confirm_meds") },
+                                        onCheckForUpdates = { updateManager.checkForUpdates() },
                                         onLogout = { showLogoutDialog = true }
                                     )
                                 }

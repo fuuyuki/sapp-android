@@ -166,9 +166,9 @@ export VERSION_CODE="1"
 
 Without those environment variables, `assembleRelease` produces an **unsigned** APK and exits successfully; only CI publishes signed artifacts.
 
-## In-app update checker (next step)
+## In-app update checker
 
-The release workflow already publishes a stable contract:
+The top bar of both dashboards has a **Check for updates** button. It uses the `latest.json` asset published by the release workflow:
 
 ```json
 {
@@ -181,18 +181,20 @@ The release workflow already publishes a stable contract:
 }
 ```
 
-The update button can:
+The flow:
 
-1. Fetch the latest release:
-   `GET https://api.github.com/repos/fuuyuki/sapp-android/releases/latest`
-   (or download the `latest.json` asset).
-2. Compare `versionCode` with `BuildConfig.VERSION_CODE` / `BuildConfig.VERSION_NAME`.
-3. Download the `.apk` asset with `DownloadManager`.
+1. Fetch `https://github.com/fuuyuki/sapp-android/releases/latest/download/latest.json`.
+2. Compare `versionCode` with `BuildConfig.VERSION_CODE`.
+3. Download the APK from `.../releases/latest/download/<apk>` with a progress dialog.
 4. Verify the SHA-256 from `latest.json`.
-5. Launch the installer with a `FileProvider` content URI and `ACTION_VIEW`.
-6. Add `REQUEST_INSTALL_PACKAGES` and handle the “install unknown apps” permission.
+5. Open Android's package installer via `FileProvider`.
 
-The download/install step is intentionally left for a follow-up so the first release can be validated independently.
+`REQUEST_INSTALL_PACKAGES` is declared. On Android 8+, if “install unknown apps” is not allowed, the app opens the settings page. Android always shows the final installer confirmation; silent installation is not allowed for normal apps.
+
+The **first install is still manual**: send the client to
+`https://github.com/fuuyuki/sapp-android/releases/latest`, have them install the APK once, and subsequent updates can use the in-app button.
+
+The release must contain both `sapp-<version>.apk` and `latest.json`; the release workflow does this automatically.
 
 ## API endpoints used
 
@@ -237,5 +239,5 @@ app/
 - No license has been chosen yet. Add a `LICENSE` before distributing publicly.
 - The MediaPipe model (`assets/face_landmarker.task`, ~3.6 MB) is vendored so the app works offline; it must remain in the repository.
 - Debug and release builds use different signing keys. Uninstall a debug build before installing a release APK.
-- The universal APK is large (~64 MB) because it bundles MediaPipe native libraries for all ABIs. Per-ABI splits are not enabled to keep the release asset and the future update checker simple.
+- The universal APK is large (~64 MB) because it bundles MediaPipe native libraries for all ABIs. Per-ABI splits are not enabled to keep the release asset and the update checker simple.
 - `versionCode` comes from the GitHub Actions run number. A locally built release should pass `-PversionCode` explicitly if it must be higher than an installed release.

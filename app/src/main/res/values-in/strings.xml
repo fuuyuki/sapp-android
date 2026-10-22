@@ -96,4 +96,27 @@
     <string name="mouth_upload_failed">Bukti kamera gagal diunggah. Periksa koneksi Anda dan coba lagi.</string>
     <string name="mouth_cooldown">Verifikasi baru saja diambil. Coba lagi sekitar %1$d menit.</string>
     <string name="mouth_verified_label">Terverifikasi kamera</string>
+    <!-- GitHub update checker -->
+    <string name="update_check_for_updates">Periksa pembaruan</string>
+    <string name="update_title">Pembaruan aplikasi</string>
+    <string name="update_checking">Memeriksa pembaruan…</string>
+    <string name="update_up_to_date_title">Versi terbaru</string>
+    <string name="update_up_to_date">Anda sudah menggunakan versi terbaru (%1$s).</string>
+    <string name="update_available_title">Pembaruan tersedia</string>
+    <string name="update_available_message">Versi %1$s tersedia. Anda menggunakan %2$s.</string>
+    <string name="update_download">Unduh</string>
+    <string name="update_downloading">Mengunduh pembaruan… %1$d%%</string>
+    <string name="update_ready_title">Siap dipasang</string>
+    <string name="update_ready_message">Pembaruan sudah diunduh. Ketuk Pasang. Jika Android meminta, izinkan pemasangan dari SApp.</string>
+    <string name="update_install">Pasang</string>
+    <string name="update_failed_title">Pembaruan gagal</string>
+    <string name="update_retry">Coba lagi</string>
+    <string name="update_later">Nanti</string>
+    <string name="update_error_check">Tidak dapat memeriksa pembaruan dari GitHub. Periksa koneksi Anda dan coba lagi.</string>
+    <string name="update_error_no_release">Belum ada rilis GitHub yang tersedia.</string>
+    <string name="update_error_download">Pembaruan tidak dapat diunduh.</string>
+    <string name="update_error_checksum">APK yang diunduh gagal pemeriksaan integritas.</string>
+    <string name="update_error_missing_file">APK yang diunduh tidak ditemukan. Silakan unduh lagi.</string>
+    <string name="update_error_unknown_sources">Izinkan pemasangan dari SApp di pengaturan Android, lalu ketuk Pasang lagi.</string>
+    <string name="update_error_install">Android tidak dapat membuka pemasang paket.</string>
 </resources>

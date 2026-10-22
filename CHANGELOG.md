@@ -20,5 +20,11 @@ All notable changes to this project are documented here.
   - WorkManager offline queue with exponential backoff.
   - Five-minute cooldown and one verified upload per medlog.
 - Evidence metadata in the medlog DTO and history UI.
+- In-app GitHub update checker:
+  - Checks the latest `latest.json` release asset.
+  - Downloads the APK with progress.
+  - Verifies the SHA-256 from the release metadata.
+  - Opens Android's package installer via a `FileProvider`.
+  - Opens the “install unknown apps” settings when required.
 - GitHub Actions CI and tag-based signed release workflow.
 - `latest.json` release asset for a future in-app update checker.

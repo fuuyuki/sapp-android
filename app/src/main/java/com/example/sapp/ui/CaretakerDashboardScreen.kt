@@ -60,6 +60,7 @@ fun CaretakerDashboardScreen(
     viewModel: CaretakerDashboardViewModel,
     onNavigateToPatientDetails: (UserOut) -> Unit,
     onNavigateToAddMeds: (UUID) -> Unit, // new callback
+    onCheckForUpdates: () -> Unit,
     onLogout: () -> Unit
 ) {
     val currentDate = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault()).format(Date())
@@ -92,10 +93,25 @@ fun CaretakerDashboardScreen(
                 },
                 actions = {
                     IconButton(onClick = { viewModel.loadPatients(caretakerId) }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = MaterialTheme.colorScheme.onPrimary)
+                        Icon(
+                            Icons.Default.Refresh,
+                            contentDescription = "Refresh",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                    IconButton(onClick = onCheckForUpdates) {
+                        Icon(
+                            Icons.Default.CloudDownload,
+                            contentDescription = stringResource(R.string.update_check_for_updates),
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
                     }
                     IconButton(onClick = onLogout) {
-                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout", tint = MaterialTheme.colorScheme.onPrimary)
+                        Icon(
+                            Icons.AutoMirrored.Filled.Logout,
+                            contentDescription = "Logout",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -127,7 +143,11 @@ fun CaretakerDashboardScreen(
         ) {
             WelcomeBanner(user, currentDate)
 
-            Text(stringResource(R.string.your_patients), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                stringResource(R.string.your_patients),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
 
             LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(patients) { patient ->
@@ -173,13 +193,21 @@ fun PatientCard(patient: UserOut, onClick: () -> Unit) {
         shape = MaterialTheme.shapes.large
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.AccountCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(40.dp))
+            Icon(
+                Icons.Default.AccountCircle,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(40.dp)
+            )
             Spacer(Modifier.width(16.dp))
             Column {
                 Text(patient.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(patient.email, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    patient.email,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
 }
-

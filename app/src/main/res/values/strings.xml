@@ -96,4 +96,27 @@
     <string name="mouth_upload_failed">Could not upload the camera proof. Check your connection and try again.</string>
     <string name="mouth_cooldown">A verification was captured recently. Try again in about %1$d min.</string>
     <string name="mouth_verified_label">Camera verified</string>
+    <!-- GitHub update checker -->
+    <string name="update_check_for_updates">Check for updates</string>
+    <string name="update_title">App update</string>
+    <string name="update_checking">Checking for updates…</string>
+    <string name="update_up_to_date_title">Up to date</string>
+    <string name="update_up_to_date">You\'re on the latest version (%1$s).</string>
+    <string name="update_available_title">Update available</string>
+    <string name="update_available_message">Version %1$s is available. You have %2$s.</string>
+    <string name="update_download">Download</string>
+    <string name="update_downloading">Downloading update… %1$d%%</string>
+    <string name="update_ready_title">Ready to install</string>
+    <string name="update_ready_message">The update is downloaded. Tap Install. If Android asks, allow installs from SApp.</string>
+    <string name="update_install">Install</string>
+    <string name="update_failed_title">Update failed</string>
+    <string name="update_retry">Retry</string>
+    <string name="update_later">Later</string>
+    <string name="update_error_check">Could not check GitHub for updates. Check your connection and try again.</string>
+    <string name="update_error_no_release">No GitHub release is available yet.</string>
+    <string name="update_error_download">The update could not be downloaded.</string>
+    <string name="update_error_checksum">The downloaded APK failed the integrity check.</string>
+    <string name="update_error_missing_file">The downloaded APK is missing. Please download it again.</string>
+    <string name="update_error_unknown_sources">Allow installs from SApp in Android settings, then tap Install again.</string>
+    <string name="update_error_install">Android could not open the package installer.</string>
 </resources>
