@@ -3,6 +3,10 @@ package com.example.sapp
 
 //import com.example.sapp.data.api.ApiService
 import com.example.sapp.data.model.*
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import retrofit2.HttpException
+import retrofit2.Response
 import java.util.UUID
 
 class AppRepository(private val apiService: ApiService) {
@@ -44,6 +48,30 @@ class AppRepository(private val apiService: ApiService) {
     suspend fun deleteSchedule(scheduleId: UUID) = apiService.deleteSchedule(scheduleId)
 
     suspend fun getMedlogs(userId: UUID) = apiService.getMedlogs(userId)
+
+    /**
+     * Same endpoint as [getMedlogs], but treats 404 as "no logs yet" (a normal
+     * state for a patient whose pillbox has not reported anything).
+     */
+    suspend fun getMedlogsOrEmpty(userId: UUID): List<MedlogOut> = try {
+        apiService.getMedlogs(userId)
+    } catch (e: HttpException) {
+        if (e.code() == 404) emptyList() else throw e
+    }
+
+    suspend fun uploadMedlogEvidence(
+        medlogId: UUID,
+        photo: MultipartBody.Part,
+        confidence: RequestBody,
+        capturedAt: RequestBody?,
+        method: RequestBody?
+    ): Response<MedlogOut> = apiService.uploadMedlogEvidence(
+        medlogId = medlogId,
+        photo = photo,
+        confidence = confidence,
+        capturedAt = capturedAt,
+        method = method
+    )
 
     suspend fun getMedlogsByCaretakerForPatient(caretakerId: UUID, patientId: UUID): List<MedlogOut> {
         return apiService.getMedlogsByCaretakerForPatient(caretakerId, patientId)

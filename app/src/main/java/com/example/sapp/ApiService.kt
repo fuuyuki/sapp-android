@@ -2,6 +2,8 @@
 package com.example.sapp
 
 import com.example.sapp.data.model.*
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.*
 import java.util.UUID
@@ -70,6 +72,20 @@ interface ApiService {
         @Path("caretaker_id") caretakerId: UUID,
         @Path("patient_id") patientId: UUID
     ): List<MedlogOut>
+
+    /**
+     * Attaches camera proof to an ESP32-created medlog. The pillbox remains the
+     * source of truth for status; this call only adds evidence metadata.
+     */
+    @Multipart
+    @PUT("medlogs/{medlog_id}/evidence")
+    suspend fun uploadMedlogEvidence(
+        @Path("medlog_id") medlogId: UUID,
+        @Part photo: MultipartBody.Part,
+        @Part("confidence") confidence: RequestBody,
+        @Part("captured_at") capturedAt: RequestBody?,
+        @Part("method") method: RequestBody?
+    ): Response<MedlogOut>
 
 
     // --- FCM Tokens ---

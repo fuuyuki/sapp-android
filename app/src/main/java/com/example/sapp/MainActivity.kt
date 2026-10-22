@@ -32,11 +32,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.sapp.ui.state.AuthState
 import com.example.sapp.ui.theme.MedicalAppTheme
+import com.example.sapp.verification.DueDoseResolver
+import com.example.sapp.verification.MouthVerificationActivity
 import java.util.*
 
 
 //class MainActivity : ComponentActivity() {
-class MainActivity : AppCompatActivity(){
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val apiService = RetrofitClient.getApiService(this)
@@ -45,7 +47,7 @@ class MainActivity : AppCompatActivity(){
 //        val viewModel = androidx.lifecycle.ViewModelProvider(this, MainViewModelFactory(repository, this))[MainViewModel.class.java]
 
         setContent {
-            MedicalAppTheme{
+            MedicalAppTheme {
                 val authState by viewModel.authState.collectAsState()
                 val userProfile by viewModel.userProfile.collectAsState()
                 val selectedPatient by viewModel.selectedPatient.collectAsState() // Single patient
@@ -155,6 +157,7 @@ class MainActivity : AppCompatActivity(){
                                         onLogout = { showLogoutDialog = true }
                                     )
                                 }
+
                                 else -> {
                                     // Default to Patient Dashboard
                                     PatientDashboardScreen(
@@ -244,12 +247,22 @@ class MainActivity : AppCompatActivity(){
                                     val validDeviceId = devices.firstOrNull()?.chip_id
 
                                     if (validDeviceId == null) {
-                                        Toast.makeText(context, "This patient has no registered devices.", Toast.LENGTH_LONG).show()
+                                        Toast.makeText(
+                                            context,
+                                            "This patient has no registered devices.",
+                                            Toast.LENGTH_LONG
+                                        ).show()
                                         return@AddMedicationScreen
                                     }
 
                                     if (scheduleToEdit == null) {
-                                        viewModel.createScheduleForPatient(patientId, name, time, repeat, validDeviceId) {
+                                        viewModel.createScheduleForPatient(
+                                            patientId,
+                                            name,
+                                            time,
+                                            repeat,
+                                            validDeviceId
+                                        ) {
                                             navController.popBackStack()
                                             viewModel.loadPatientData(patientId)
                                         }
@@ -291,10 +304,37 @@ class MainActivity : AppCompatActivity(){
 
                         composable("medlogs") {
                             val logs by viewModel.medlogs.collectAsState()
+                            val verifyLauncher = rememberLauncherForActivityResult(
+                                ActivityResultContracts.StartActivityForResult()
+                            ) {
+                                // The proof upload may have completed while the
+                                // camera screen was open; refresh the list so
+                                // evidence_key/confidence show immediately.
+                                viewModel.refreshDashboard()
+                            }
                             MedicationLogsScreen(
                                 logs = logs,
                                 onBack = { navController.popBackStack() },
-                                onRefresh = { viewModel.refreshDashboard() }
+                                onRefresh = { viewModel.refreshDashboard() },
+                                onVerifyLog = { log ->
+                                    val currentUserId = userId
+                                    if (currentUserId == null) {
+                                        Toast.makeText(
+                                            context,
+                                            "Please sign in as a patient to add camera proof.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    } else {
+                                        verifyLauncher.launch(
+                                            MouthVerificationActivity.intent(
+                                                context = context,
+                                                userId = currentUserId,
+                                                pillname = log.pillname,
+                                                logs = logs
+                                            )
+                                        )
+                                    }
+                                }
                             )
                         }
 
@@ -319,29 +359,39 @@ class MainActivity : AppCompatActivity(){
                         }
 
                         composable("confirm_meds") {
-                            val context = LocalContext.current
+                            val schedules by viewModel.schedules.collectAsState()
+                            val medlogs by viewModel.medlogs.collectAsState()
+                            val duePill = DueDoseResolver.resolve(schedules, medlogs)
 
-                            // Permission state handler
-                            val cameraPermissionLauncher = rememberLauncherForActivityResult(
-                                ActivityResultContracts.RequestPermission()
-                            ) { isGranted ->
-                                if (!isGranted) {
-                                    Toast.makeText(context, "Camera permission is required to verify medication", Toast.LENGTH_SHORT).show()
-                                    navController.popBackStack()
-                                }
-                            }
-
-                            // Request permission as soon as we enter this route
-                            LaunchedEffect(Unit) {
-                                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                            // Refresh when the verification activity closes so the
+                            // evidence metadata and any newly reported medlog show up.
+                            val verifyLauncher = rememberLauncherForActivityResult(
+                                ActivityResultContracts.StartActivityForResult()
+                            ) {
+                                viewModel.refreshDashboard()
                             }
 
                             ConfirmMedicationScreen(
+                                duePillName = duePill,
                                 onBack = { navController.popBackStack() },
-                                onConfirm = {
-                                    // Logic for when the user clicks the shutter button
-                                    navController.popBackStack()
-                                    Toast.makeText(context, "Medication Verified!", Toast.LENGTH_SHORT).show()
+                                onStartVerification = { pill ->
+                                    val currentUserId = userId
+                                    if (currentUserId == null) {
+                                        Toast.makeText(
+                                            context,
+                                            "Please sign in as a patient to add camera proof.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    } else {
+                                        verifyLauncher.launch(
+                                            MouthVerificationActivity.intent(
+                                                context = context,
+                                                userId = currentUserId,
+                                                pillname = pill,
+                                                logs = medlogs
+                                            )
+                                        )
+                                    }
                                 }
                             )
                         }
@@ -353,7 +403,8 @@ class MainActivity : AppCompatActivity(){
     }
 }
 
-class MainViewModelFactory(private val repo: AppRepository, private val context: Context) : androidx.lifecycle.ViewModelProvider.Factory {
+class MainViewModelFactory(private val repo: AppRepository, private val context: Context) :
+    androidx.lifecycle.ViewModelProvider.Factory {
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         return MainViewModel(repo, context) as T
     }
@@ -380,4 +431,3 @@ fun LogoutConfirmationDialog(
         }
     )
 }
-
