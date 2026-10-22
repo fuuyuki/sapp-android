@@ -119,4 +119,22 @@
     <string name="update_error_missing_file">APK yang diunduh tidak ditemukan. Silakan unduh lagi.</string>
     <string name="update_error_unknown_sources">Izinkan pemasangan dari SApp di pengaturan Android, lalu ketuk Pasang lagi.</string>
     <string name="update_error_install">Android tidak dapat membuka pemasang paket.</string>
+    <!-- Refreshed dashboard / empty states -->
+    <string name="brand_tagline">Obat Anda, tetap teratur.</string>
+    <string name="brand_feature_1">Pengingat kotak obat pintar</string>
+    <string name="brand_feature_2">Pengawasan pendamping</string>
+    <string name="brand_feature_3">Dosis terverifikasi kamera</string>
+    <string name="quick_actions">Aksi cepat</string>
+    <string name="adherence">Kepatuhan</string>
+    <string name="adherence_this_week">Minggu ini</string>
+    <string name="streak_days">%1$d hari beruntun</string>
+    <string name="no_devices">Belum ada perangkat</string>
+    <string name="no_devices_message">Hubungkan kotak obat untuk melihatnya di sini.</string>
+    <string name="no_medlogs">Belum ada catatan obat</string>
+    <string name="no_medlogs_message">Catatan muncul setelah kotak obat melaporkan dosis.</string>
+    <string name="no_schedules_message">Tambahkan jadwal obat untuk memulai.</string>
+    <string name="no_patients_message">Pasien yang ditugaskan kepada Anda akan muncul di sini.</string>
+    <string name="patients_count">Pasien: %1$d</string>
+    <string name="scheduled_for">Dijadwalkan untuk %1$s</string>
+    <string name="select_dose_time">Pilih waktu minum</string>
 </resources>

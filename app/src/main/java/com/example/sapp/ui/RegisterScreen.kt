@@ -1,26 +1,48 @@
 package com.example.sapp.ui
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.Image
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
-import kotlinx.coroutines.launch
 import com.example.sapp.R
+import com.example.sapp.ui.components.AuthScaffold
 import com.example.sapp.ui.state.AuthState
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,13 +56,13 @@ fun RegisterScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var role by remember { mutableStateOf("patient") } // default role
+    var role by remember { mutableStateOf("patient") }
+    var expanded by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
     val authState by viewModel.authState.collectAsState()
     val regMsg = stringResource(R.string.registration_successful)
 
-    // React to auth state changes (RegistrationState)
     LaunchedEffect(authState) {
         when (authState) {
             AuthState.RegistrationSuccess -> {
@@ -53,39 +75,31 @@ fun RegisterScreen(
                     }
                 }
             }
+
             is AuthState.Error -> {
                 snackbarHostState.showSnackbar((authState as AuthState.Error).message)
             }
+
             else -> Unit
         }
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .padding(24.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        AuthScaffold(
+            title = stringResource(R.string.create_account),
+            subtitle = stringResource(R.string.please_fill_in_the_details_to_register),
+            modifier = Modifier.padding(padding)
         ) {
-            // ✅ Logo image
-            Image(
-                painter = painterResource(id = R.drawable.pills_375879),
-                contentDescription = "App Logo",
-                modifier = Modifier.size(96.dp)
-            )
-
-            Text(stringResource(R.string.create_account), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            Text(stringResource(R.string.please_fill_in_the_details_to_register), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
                 label = { Text(stringResource(R.string.name)) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                singleLine = true
             )
 
             OutlinedTextField(
@@ -93,6 +107,8 @@ fun RegisterScreen(
                 onValueChange = { email = it },
                 label = { Text(stringResource(R.string.email_address)) },
                 modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
 
@@ -101,20 +117,28 @@ fun RegisterScreen(
                 onValueChange = { password = it },
                 label = { Text(stringResource(R.string.password)) },
                 modifier = Modifier.fillMaxWidth(),
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                shape = MaterialTheme.shapes.medium,
+                singleLine = true,
+                visualTransformation = if (passwordVisible) {
+                    VisualTransformation.None
+                } else {
+                    PasswordVisualTransformation()
+                },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(
-                            imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                            imageVector = if (passwordVisible) {
+                                Icons.Filled.Visibility
+                            } else {
+                                Icons.Filled.VisibilityOff
+                            },
                             contentDescription = null
                         )
                     }
                 }
             )
 
-            // Role dropdown
-            var expanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = { expanded = !expanded }
@@ -125,7 +149,10 @@ fun RegisterScreen(
                     readOnly = true,
                     label = { Text(stringResource(R.string.role)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    modifier = Modifier.fillMaxWidth().menuAnchor()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                    shape = MaterialTheme.shapes.medium
                 )
                 ExposedDropdownMenu(
                     expanded = expanded,
@@ -146,26 +173,33 @@ fun RegisterScreen(
             Button(
                 onClick = {
                     if (name.isBlank() || email.isBlank() || password.isBlank()) {
-                        scope.launch {
-                            snackbarHostState.showSnackbar(fieldMsg)
-                        }
+                        scope.launch { snackbarHostState.showSnackbar(fieldMsg) }
                     } else {
                         viewModel.register(name, email, password, role)
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = MaterialTheme.shapes.medium,
+                enabled = authState !is AuthState.Loading
             ) {
                 Text(stringResource(R.string.sign_up))
-            }
-
-            TextButton(onClick = onNavigateToLogin) {
-                Text(stringResource(R.string.already_have_an_account))
             }
 
             if (authState is AuthState.Loading) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
+
+            TextButton(
+                onClick = onNavigateToLogin,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = stringResource(R.string.already_have_an_account),
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }
-

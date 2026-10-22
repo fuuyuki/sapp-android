@@ -1,26 +1,53 @@
 package com.example.sapp.ui
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Devices
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import com.example.sapp.R
-import com.example.sapp.data.model.*
-import java.text.SimpleDateFormat
-import java.util.*
+import com.example.sapp.data.model.AdherenceSummaryResponse
+import com.example.sapp.data.model.DeviceOut
+import com.example.sapp.data.model.MedlogOut
+import com.example.sapp.data.model.ScheduleOut
+import com.example.sapp.data.model.UserOut
+import com.example.sapp.ui.components.AppCard
+import com.example.sapp.ui.components.AppTopBar
+import com.example.sapp.ui.components.EmptyState
+import com.example.sapp.ui.components.GradientHero
+import com.example.sapp.ui.components.ScreenContainer
+import com.example.sapp.ui.components.SectionHeader
+import com.example.sapp.ui.components.StatusPill
+import java.util.UUID
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PatientDetailsScreen(
     patient: UserOut,
@@ -29,80 +56,72 @@ fun PatientDetailsScreen(
     schedules: List<ScheduleOut>,
     medlogs: List<MedlogOut>,
     onNavigateBack: () -> Unit,
-    // ✅ Add these new callbacks
     onDeleteSchedule: (UUID) -> Unit,
     onEditSchedule: (ScheduleOut) -> Unit
 ) {
-    val currentDate = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault()).format(Date())
-
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        "${patient.name}'s Details",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
-                )
+            AppTopBar(
+                title = patient.name,
+                onBack = onNavigateBack
             )
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ScreenContainer(
+            modifier = Modifier.padding(padding),
+            maxWidth = 1040.dp
         ) {
-            // ✅ Adherence snapshot
+            GradientHero(
+                title = patient.name,
+                subtitle = patient.email,
+                icon = Icons.Default.AccountCircle
+            )
+
             HealthSnapshot(adherence)
 
-            // ✅ Devices list
-            Text(stringResource(R.string.devices), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            if (devices.isEmpty()) {
-                Text("No devices assigned", style = MaterialTheme.typography.bodyMedium)
-            } else {
-                devices.forEach { device ->
-                    DeviceCard_Patient(device)
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                if (maxWidth >= 760.dp) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            DevicesSection(devices)
+                        }
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            SchedulesSection(
+                                schedules = schedules,
+                                onEditSchedule = onEditSchedule,
+                                onDeleteSchedule = onDeleteSchedule
+                            )
+                        }
+                    }
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                        DevicesSection(devices)
+                        SchedulesSection(
+                            schedules = schedules,
+                            onEditSchedule = onEditSchedule,
+                            onDeleteSchedule = onDeleteSchedule
+                        )
+                    }
                 }
             }
 
-            // ✅ Schedules list
-            Text(stringResource(R.string.schedules), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            if (schedules.isEmpty()) {
-                Text("No schedules found", style = MaterialTheme.typography.bodyMedium)
-            } else {
-                schedules.forEach { schedule ->
-                    ScheduleCard_Patient(
-                        schedule = schedule,
-                        onEdit = { onEditSchedule(schedule) },
-                        onDelete = { onDeleteSchedule(schedule.id) }
-                    )
-                }
-            }
-
-            // ✅ Medlogs list
-            Text(stringResource(R.string.medication_logs), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            SectionHeader(title = stringResource(R.string.medication_logs))
             if (medlogs.isEmpty()) {
-                Text("No medication logs available", style = MaterialTheme.typography.bodyMedium)
+                EmptyState(
+                    icon = Icons.Default.History,
+                    title = stringResource(R.string.no_medlogs),
+                    message = stringResource(R.string.no_medlogs_message)
+                )
             } else {
-                medlogs.forEach { log ->
-                    MedlogCard_Patient(log)
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    medlogs.forEach { log -> MedlogCard_Patient(log) }
                 }
             }
         }
@@ -110,59 +129,80 @@ fun PatientDetailsScreen(
 }
 
 @Composable
-fun DeviceCard_Patient(device: DeviceOut) {
-    // 1. Parse the ISO date string (Same logic as DeviceListScreen)
-    val formattedDate = try {
-        val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSX", Locale.getDefault())
-        parser.timeZone = TimeZone.getTimeZone("UTC")
-        val date: Date? = parser.parse(device.last_seen ?: "")
+private fun DevicesSection(devices: List<DeviceOut>) {
+    SectionHeader(title = stringResource(R.string.devices))
+    if (devices.isEmpty()) {
+        EmptyState(
+            icon = Icons.Default.Devices,
+            title = stringResource(R.string.no_devices),
+            message = stringResource(R.string.no_devices_message)
+        )
+    } else {
+        devices.forEach { device -> DeviceCard_Patient(device) }
+    }
+}
 
-        val formatter = SimpleDateFormat("dd MMMM yyyy HH:mm", Locale.getDefault())
-        date?.let { formatter.format(it) } ?: (device.last_seen ?: "Never")
-    } catch (e: Exception) {
-        try {
-            val simpleParser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-            val date = simpleParser.parse(device.last_seen ?: "")
-            val formatter = SimpleDateFormat("dd MMMM yyyy HH:mm", Locale.getDefault())
-            date?.let { formatter.format(it) } ?: device.last_seen
-        } catch (e2: Exception) {
-            device.last_seen ?: "Unknown"
+@Composable
+private fun SchedulesSection(
+    schedules: List<ScheduleOut>,
+    onEditSchedule: (ScheduleOut) -> Unit,
+    onDeleteSchedule: (UUID) -> Unit
+) {
+    SectionHeader(title = stringResource(R.string.schedules))
+    if (schedules.isEmpty()) {
+        EmptyState(
+            icon = Icons.Default.Schedule,
+            title = stringResource(R.string.no_schedules),
+            message = stringResource(R.string.no_schedules_message)
+        )
+    } else {
+        schedules.forEach { schedule ->
+            ScheduleCard_Patient(
+                schedule = schedule,
+                onEdit = { onEditSchedule(schedule) },
+                onDelete = { onDeleteSchedule(schedule.id) }
+            )
         }
     }
+}
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        shape = MaterialTheme.shapes.large
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier.weight(1f)
+@Composable
+fun DeviceCard_Patient(device: DeviceOut) {
+    AppCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Surface(
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                shape = RoundedCornerShape(14.dp)
             ) {
+                Icon(
+                    imageVector = Icons.Default.Devices,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(10.dp).size(20.dp)
+                )
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    device.name,
+                    text = device.name,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    stringResource(R.string.last_seen) + "$formattedDate",
+                    text = stringResource(R.string.last_seen, formatLastSeen(device.last_seen)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    "ID: ${device.chip_id}",
+                    text = "ID: ${device.chip_id}",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
-
-            // 2. Reuse the StatusBadge logic
             StatusBadgeSmall(device.status)
         }
     }
@@ -170,24 +210,16 @@ fun DeviceCard_Patient(device: DeviceOut) {
 
 @Composable
 fun StatusBadgeSmall(status: String) {
-    val (bgColor, textColor) = when (status.lowercase()) {
-        "online" -> MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.onPrimary
-        "offline" -> MaterialTheme.colorScheme.error to MaterialTheme.colorScheme.onError
-        else -> MaterialTheme.colorScheme.tertiary to MaterialTheme.colorScheme.onTertiary
+    val (container, content) = when (status.lowercase()) {
+        "online" -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
+        "offline" -> MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
+        else -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
     }
-
-    Surface(
-        color = bgColor,
-        shape = MaterialTheme.shapes.small,
-    ) {
-        Text(
-            text = status.uppercase(),
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            color = textColor,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold
-        )
-    }
+    StatusPill(
+        text = status.uppercase(),
+        containerColor = container,
+        contentColor = content
+    )
 }
 
 @Composable
@@ -196,74 +228,54 @@ fun ScheduleCard_Patient(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        shape = MaterialTheme.shapes.large
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically // Keeps everything aligned in a straight line
-        ) {
-            // ✅ Info Section (Takes up available space, pushing buttons to the right)
+    val time = schedule.dose_time.substringAfter("T").substringBeforeLast(":")
+
+    AppCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Surface(
+                color = MaterialTheme.colorScheme.primaryContainer,
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Text(
+                    text = time,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+            Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = schedule.pillname,
-                    style = MaterialTheme.typography.titleMedium, // Matches Device name size
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // ✅ Time Badge (Proportional to the Status Badge)
-                Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Text(
-                        text = try {
-                            schedule.dose_time.substringAfter("T").substringBeforeLast(":")
-                        } catch (e: Exception) {
-                            schedule.dose_time
-                        },
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
+                Text(
+                    text = "${stringResource(R.string.repeats)}: ${formatRepeatDays(schedule.repeat_days)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
-
-            // ✅ Action Section (Grouped on the right)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(
-                    onClick = onEdit,
-                    modifier = Modifier.size(40.dp) // Standard icon button size
-                ) {
-                    Icon(
-                        Icons.Default.Edit,
-                        contentDescription = "Edit",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(4.dp))
-
-                IconButton(
-                    onClick = onDelete,
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "Delete",
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+            IconButton(onClick = onEdit, modifier = Modifier.size(40.dp)) {
+                Icon(
+                    Icons.Default.Edit,
+                    contentDescription = stringResource(R.string.edit),
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            IconButton(onClick = onDelete, modifier = Modifier.size(40.dp)) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = stringResource(R.string.delete),
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
     }
@@ -271,42 +283,36 @@ fun ScheduleCard_Patient(
 
 @Composable
 fun MedlogCard_Patient(log: MedlogOut) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        shape = MaterialTheme.shapes.large
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+    val isTaken = log.status.equals("taken", ignoreCase = true)
+    val statusColor = if (isTaken) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+    val statusIcon = if (isTaken) Icons.Default.CheckCircle else Icons.Default.Error
+
+    AppCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Surface(color = statusColor.copy(alpha = 0.12f), shape = CircleShape) {
+                Icon(
+                    imageVector = statusIcon,
+                    contentDescription = null,
+                    tint = statusColor,
+                    modifier = Modifier.padding(9.dp).size(20.dp)
+                )
+            }
+            Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = log.pillname,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
-
-                // Extract time from ISO string for the subtext
-                val timeOnly = try {
-                    log.scheduled_time.substringAfter("T").substringBeforeLast(":")
-                } catch (e: Exception) {
-                    log.scheduled_time
-                }
-
                 Text(
-                    text = "Scheduled for: $timeOnly",
+                    text = stringResource(R.string.scheduled_for, formatIsoDateTime(log.scheduled_time)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-
-            // Status Badge (Proportional to the others)
-            StatusBadgeSmall(status = log.status)
+            StatusBadgeSmall(log.status)
         }
     }
 }
-

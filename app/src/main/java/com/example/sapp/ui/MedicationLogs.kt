@@ -1,31 +1,45 @@
 package com.example.sapp.ui
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.*
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.sapp.data.model.MedlogOut
 import com.example.sapp.R
+import com.example.sapp.data.model.MedlogOut
+import com.example.sapp.ui.components.AdaptiveCardList
+import com.example.sapp.ui.components.AppCard
+import com.example.sapp.ui.components.AppTopBar
+import com.example.sapp.ui.components.EmptyState
+import com.example.sapp.ui.components.StatusPill
 import com.example.sapp.verification.MedlogMatcher
 import java.text.SimpleDateFormat
 import java.time.OffsetDateTime
-import java.util.*
+import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MedicationLogsScreen(
     logs: List<MedlogOut>,
@@ -34,40 +48,16 @@ fun MedicationLogsScreen(
     onVerifyLog: ((MedlogOut) -> Unit)? = null
 ) {
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        stringResource(R.string.medication_logs),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-                },
+            AppTopBar(
+                title = stringResource(R.string.medication_logs),
+                onBack = onBack,
                 actions = {
                     IconButton(onClick = onRefresh) {
-                        Icon(
-                            Icons.Default.Refresh,
-                            contentDescription = "Refresh",
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
+                        Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.refresh))
                     }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                }
             )
         }
     ) { padding ->
@@ -78,38 +68,27 @@ fun MedicationLogsScreen(
                     .padding(padding),
                 contentAlignment = Alignment.Center
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        Icons.Default.History,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    Text("No medication logs found", style = MaterialTheme.typography.bodyLarge)
-                }
+                EmptyState(
+                    icon = Icons.Default.History,
+                    title = stringResource(R.string.no_medlogs),
+                    message = stringResource(R.string.no_medlogs_message)
+                )
             }
         } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
-            ) {
-                // Sort logs by time, descending (latest first)
-                val sortedLogs = logs.sortedByDescending { it.scheduled_time }
-                items(sortedLogs) { log ->
-                    val canVerify = onVerifyLog != null &&
-                            log.evidence_key.isNullOrEmpty() &&
-                            log.status.equals("taken", ignoreCase = true) &&
-                            MedlogMatcher.isWithinWindow(log.scheduled_time, OffsetDateTime.now())
-                    val verifyAction: (() -> Unit)? = if (canVerify) {
-                        onVerifyLog?.let { callback -> { callback(log) } }
-                    } else null
-                    MedlogCard(log = log, onVerify = verifyAction)
-                }
+            val sortedLogs = logs.sortedByDescending { it.scheduled_time }
+            AdaptiveCardList(
+                items = sortedLogs,
+                modifier = Modifier.padding(padding),
+                minCardWidth = 340.dp
+            ) { log ->
+                val canVerify = onVerifyLog != null &&
+                        log.evidence_key.isNullOrEmpty() &&
+                        log.status.equals("taken", ignoreCase = true) &&
+                        MedlogMatcher.isWithinWindow(log.scheduled_time, OffsetDateTime.now())
+                val verifyAction: (() -> Unit)? = if (canVerify) {
+                    onVerifyLog?.let { callback -> { callback(log) } }
+                } else null
+                MedlogCard(log = log, onVerify = verifyAction)
             }
         }
     }
@@ -117,89 +96,82 @@ fun MedicationLogsScreen(
 
 @Composable
 fun MedlogCard(log: MedlogOut, onVerify: (() -> Unit)? = null) {
-    val isTaken = log.status.lowercase() == "taken"
-    val statusColor = if (isTaken) Color(0xFF4CAF50) else MaterialTheme.colorScheme.error
+    val isTaken = log.status.equals("taken", ignoreCase = true)
+    val statusColor = if (isTaken) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.error
+    }
     val statusIcon = if (isTaken) Icons.Default.CheckCircle else Icons.Default.Error
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
-        Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+    AppCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Surface(
+                color = statusColor.copy(alpha = 0.12f),
+                shape = CircleShape
             ) {
-                // Status Icon
                 Icon(
                     imageVector = statusIcon,
                     contentDescription = log.status,
                     tint = statusColor,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.padding(10.dp).size(22.dp)
                 )
-
-                Spacer(Modifier.width(16.dp))
-
-                // Info Section
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = log.pillname,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = formatIsoDateTime(log.scheduled_time),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                // Status Badge
-                Surface(
-                    color = statusColor.copy(alpha = 0.1f),
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Text(
-                        text = log.status.uppercase(),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = statusColor
-                    )
-                }
             }
 
-            if (!log.evidence_key.isNullOrEmpty()) {
-                Spacer(Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.CheckCircle,
-                        contentDescription = null,
-                        tint = Color(0xFF4CAF50),
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    val percent = log.verification_confidence
-                        ?.let { " - ${(it.coerceIn(0.0, 1.0) * 100).toInt()}%" }
-                        .orEmpty()
-                    Text(
-                        text = stringResource(R.string.mouth_verified_label) + percent,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            } else if (isTaken && onVerify != null) {
-                Spacer(Modifier.height(4.dp))
-                TextButton(onClick = onVerify) {
-                    Icon(
-                        Icons.Default.CameraAlt,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(stringResource(R.string.verify_with_camera))
-                }
+            Spacer(Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = log.pillname,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = formatIsoDateTime(log.scheduled_time),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            StatusPill(
+                text = log.status.uppercase(),
+                containerColor = statusColor.copy(alpha = 0.12f),
+                contentColor = statusColor
+            )
+        }
+
+        if (!log.evidence_key.isNullOrEmpty()) {
+            Spacer(Modifier.size(10.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(Modifier.width(6.dp))
+                val percent = log.verification_confidence
+                    ?.let { " · ${(it.coerceIn(0.0, 1.0) * 100).toInt()}%" }
+                    .orEmpty()
+                Text(
+                    text = stringResource(R.string.mouth_verified_label) + percent,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else if (isTaken && onVerify != null) {
+            Spacer(Modifier.size(10.dp))
+            FilledTonalButton(
+                onClick = onVerify,
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Icon(
+                    Icons.Default.CameraAlt,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.verify_with_camera))
             }
         }
     }
@@ -207,12 +179,11 @@ fun MedlogCard(log: MedlogOut, onVerify: (() -> Unit)? = null) {
 
 fun formatIsoDateTime(isoString: String): String {
     return try {
-        // Expected format "2023-10-27T10:00:00" or similar
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
         val date = sdf.parse(isoString)
-        val displayFormat = SimpleDateFormat("MMM dd, yyyy - HH:mm", Locale.getDefault())
+        val displayFormat = SimpleDateFormat("dd MMM yyyy · HH:mm", Locale.getDefault())
         if (date != null) displayFormat.format(date) else isoString
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         isoString
     }
 }

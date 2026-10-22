@@ -8,11 +8,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun LanguageSelector(
     currentLanguage: String?, // "en" or "id"
-    onLanguageChange: (String) -> Unit
+    onLanguageChange: (String) -> Unit,
+    tint: Color = MaterialTheme.colorScheme.onSurfaceVariant
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -21,8 +23,7 @@ fun LanguageSelector(
             Icon(
                 imageVector = Icons.Default.Language,
                 contentDescription = "Change Language",
-                // Set to onPrimary if using in a primary-colored TopAppBar
-                tint = MaterialTheme.colorScheme.onPrimary
+                tint = tint
             )
         }
         DropdownMenu(

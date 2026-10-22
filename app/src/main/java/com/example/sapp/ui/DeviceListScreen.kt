@@ -1,28 +1,41 @@
 package com.example.sapp.ui
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyItemScope
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Devices
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import com.example.sapp.R
 import com.example.sapp.data.model.DeviceOut
+import com.example.sapp.ui.components.AdaptiveCardList
+import com.example.sapp.ui.components.AppCard
+import com.example.sapp.ui.components.AppTopBar
+import com.example.sapp.ui.components.EmptyState
+import com.example.sapp.ui.components.StatusPill
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-
 
 data class Device(
     val name: String,
@@ -30,7 +43,6 @@ data class Device(
     val lastSeen: String
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeviceListScreen(
     devices: List<DeviceOut>,
@@ -39,114 +51,86 @@ fun DeviceListScreen(
     onRefresh: () -> Unit
 ) {
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        "My Devices",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-                },
+            AppTopBar(
+                title = stringResource(R.string.devices),
+                onBack = onBack,
                 actions = {
                     IconButton(onClick = onRefresh) {
-                        Icon(
-                            Icons.Default.Refresh,
-                            contentDescription = "Refresh",
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
+                        Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.refresh))
                     }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                }
             )
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(devices) { device ->
-                DeviceCard(device, onClick = { onDeviceClick(device) })
+        if (devices.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                EmptyState(
+                    icon = Icons.Default.Devices,
+                    title = stringResource(R.string.no_devices),
+                    message = stringResource(R.string.no_devices_message)
+                )
+            }
+        } else {
+            AdaptiveCardList(
+                items = devices,
+                modifier = Modifier.padding(padding),
+                minCardWidth = 320.dp
+            ) { device ->
+                DeviceCard(device = device, onClick = { onDeviceClick(device) })
             }
         }
     }
 }
-//private fun LazyItemScope.onDeviceClick(p1: DeviceOut) {}
 
 @Composable
 fun DeviceCard(device: DeviceOut, onClick: () -> Unit) {
-    // Parse ISO string into Date
-    val formattedDate = try {
-        val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSX", Locale.getDefault())
-        parser.timeZone = TimeZone.getTimeZone("UTC")
-        val date: Date? = parser.parse(device.last_seen ?: "Never")
+    val formattedDate = formatLastSeen(device.last_seen)
 
-        val formatter = SimpleDateFormat("dd MMMM yyyy HH:mm", Locale.getDefault())
-        date?.let { formatter.format(it) } ?: device.last_seen
-    } catch (e: Exception) {
-        // Fallback for simpler formats if the one above fails
-        try {
-            val simpleParser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-            val date = simpleParser.parse(device.last_seen ?: "")
-            val formatter = SimpleDateFormat("dd MMMM yyyy HH:mm", Locale.getDefault())
-            date?.let { formatter.format(it) } ?: device.last_seen
-        } catch (e2: Exception) {
-            device.last_seen ?: "Unknown"
-        }
-    }
-
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        shape = MaterialTheme.shapes.large
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier.weight(1f) // ✅ text takes available space
+    AppCard(onClick = onClick) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Surface(
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                shape = RoundedCornerShape(16.dp)
             ) {
-                Text(
-                    device.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    stringResource(R.string.last_seen) + "$formattedDate",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    "ID: ${device.chip_id}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary
+                Icon(
+                    imageVector = Icons.Default.Devices,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(12.dp).size(24.dp)
                 )
             }
-
-            // ✅ Badge pinned to right edge
+            Spacer(Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = device.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = stringResource(R.string.last_seen, formattedDate),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "ID: ${device.chip_id}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Spacer(Modifier.width(8.dp))
             StatusBadge(device.status)
         }
     }
@@ -154,30 +138,34 @@ fun DeviceCard(device: DeviceOut, onClick: () -> Unit) {
 
 @Composable
 fun StatusBadge(status: String) {
-    val (bgColor, textColor) = when (status.lowercase()) {
-        "online" -> MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.onPrimary
-        "offline" -> MaterialTheme.colorScheme.error to MaterialTheme.colorScheme.onError
-        else -> MaterialTheme.colorScheme.tertiary to MaterialTheme.colorScheme.onTertiary
+    val (container, content) = when (status.lowercase()) {
+        "online" -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
+        "offline" -> MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
+        else -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
     }
+    StatusPill(
+        text = status.uppercase(),
+        containerColor = container,
+        contentColor = content
+    )
+}
 
-    Surface(
-        color = bgColor,
-        shape = MaterialTheme.shapes.small,
-        modifier = Modifier
-            .wrapContentWidth()
-            .height(28.dp)
-    ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.padding(horizontal = 12.dp)
-        ) {
-            Text(
-                text = status,
-                color = textColor,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold
-            )
+internal fun formatLastSeen(raw: String?): String {
+    if (raw.isNullOrBlank()) return "Never"
+    return try {
+        val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSX", Locale.getDefault())
+        parser.timeZone = TimeZone.getTimeZone("UTC")
+        val date: Date? = parser.parse(raw)
+        val formatter = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.getDefault())
+        date?.let { formatter.format(it) } ?: raw
+    } catch (_: Exception) {
+        try {
+            val simpleParser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+            val date = simpleParser.parse(raw)
+            val formatter = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.getDefault())
+            date?.let { formatter.format(it) } ?: raw
+        } catch (_: Exception) {
+            raw
         }
     }
 }
-

@@ -1,26 +1,40 @@
 package com.example.sapp.ui
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.example.sapp.data.model.ScheduleOut
 import com.example.sapp.R
+import com.example.sapp.data.model.ScheduleOut
+import com.example.sapp.ui.components.AdaptiveCardList
+import com.example.sapp.ui.components.AppCard
+import com.example.sapp.ui.components.AppTopBar
+import com.example.sapp.ui.components.EmptyState
 import java.util.UUID
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleScreen(
     schedules: List<ScheduleOut>,
@@ -30,40 +44,16 @@ fun ScheduleScreen(
     onDelete: (UUID) -> Unit
 ) {
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        stringResource(R.string.schedules),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-                },
+            AppTopBar(
+                title = stringResource(R.string.schedules),
+                onBack = onBack,
                 actions = {
                     IconButton(onClick = onRefresh) {
-                        Icon(
-                            Icons.Default.Refresh,
-                            contentDescription = "Refresh",
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
+                        Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.refresh))
                     }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                }
             )
         }
     ) { padding ->
@@ -74,32 +64,23 @@ fun ScheduleScreen(
                     .padding(padding),
                 contentAlignment = Alignment.Center
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        Icons.Default.Schedule,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    Text(stringResource(R.string.no_schedules), style = MaterialTheme.typography.bodyLarge)
-                }
+                EmptyState(
+                    icon = Icons.Default.Schedule,
+                    title = stringResource(R.string.no_schedules),
+                    message = stringResource(R.string.no_schedules_message)
+                )
             }
         } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(schedules) { schedule ->
-                    ScheduleCard(
-                        schedule,
-                        onEdit = { onEdit(schedule) },
-                        onDelete = { onDelete(schedule.id) }
-                    )
-                }
+            AdaptiveCardList(
+                items = schedules,
+                modifier = Modifier.padding(padding),
+                minCardWidth = 340.dp
+            ) { schedule ->
+                ScheduleCard(
+                    schedule = schedule,
+                    onEdit = { onEdit(schedule) },
+                    onDelete = { onDelete(schedule.id) }
+                )
             }
         }
     }
@@ -111,62 +92,60 @@ fun ScheduleCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Time Badge
+    val time = schedule.dose_time.substringAfter("T").substringBeforeLast(":")
+
+    AppCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Surface(
                 color = MaterialTheme.colorScheme.primaryContainer,
-                shape = MaterialTheme.shapes.medium
+                shape = RoundedCornerShape(16.dp)
             ) {
-                Text(
-                    text = schedule.dose_time.substringAfter("T").substringBeforeLast(":"),
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                Column(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = time,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
             }
 
-            Spacer(Modifier.width(16.dp))
+            Spacer(Modifier.width(14.dp))
 
-            // Info Section
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = schedule.pillname,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = "Repeats: ${formatRepeatDays(schedule.repeat_days)}",
+                    text = "${stringResource(R.string.repeats)}: ${formatRepeatDays(schedule.repeat_days)}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
 
-            // Update icon next to delete icon
             IconButton(onClick = onEdit) {
                 Icon(
                     imageVector = Icons.Default.Edit,
-                    contentDescription = "Edit Schedule",
-                    tint = MaterialTheme.colorScheme.primary
+                    contentDescription = stringResource(R.string.edit),
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
                 )
             }
-
-            // Delete Action
             IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete Schedule",
-                    tint = MaterialTheme.colorScheme.error
+                    contentDescription = stringResource(R.string.delete),
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
@@ -174,21 +153,13 @@ fun ScheduleCard(
 }
 
 fun formatRepeatDays(repeatDays: Int): String {
-    if (repeatDays == 127) {
-        return "Setiap hari"
-    }
-    if (repeatDays == 0) {
-        return "Does not repeat"
-    }
+    if (repeatDays == 127) return "Setiap hari"
+    if (repeatDays == 0) return "Does not repeat"
 
     val days = listOf("Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab")
     val selectedDays = mutableListOf<String>()
-
     days.forEachIndexed { index, day ->
-        if ((repeatDays shr index) and 1 == 1) {
-            selectedDays.add(day)
-        }
+        if ((repeatDays shr index) and 1 == 1) selectedDays.add(day)
     }
-
     return selectedDays.joinToString(", ")
 }

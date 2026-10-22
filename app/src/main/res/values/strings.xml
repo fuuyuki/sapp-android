@@ -119,4 +119,22 @@
     <string name="update_error_missing_file">The downloaded APK is missing. Please download it again.</string>
     <string name="update_error_unknown_sources">Allow installs from SApp in Android settings, then tap Install again.</string>
     <string name="update_error_install">Android could not open the package installer.</string>
+    <!-- Refreshed dashboard / empty states -->
+    <string name="brand_tagline">Your medication, on track.</string>
+    <string name="brand_feature_1">Smart pillbox reminders</string>
+    <string name="brand_feature_2">Caregiver oversight</string>
+    <string name="brand_feature_3">Camera-verified doses</string>
+    <string name="quick_actions">Quick actions</string>
+    <string name="adherence">Adherence</string>
+    <string name="adherence_this_week">This week</string>
+    <string name="streak_days">%1$d day streak</string>
+    <string name="no_devices">No devices yet</string>
+    <string name="no_devices_message">Connect a pillbox to see it here.</string>
+    <string name="no_medlogs">No medication logs yet</string>
+    <string name="no_medlogs_message">Logs appear after the pillbox reports a dose.</string>
+    <string name="no_schedules_message">Add a medication schedule to get started.</string>
+    <string name="no_patients_message">Patients assigned to you will appear here.</string>
+    <string name="patients_count">Patients: %1$d</string>
+    <string name="scheduled_for">Scheduled for %1$s</string>
+    <string name="select_dose_time">Select dose time</string>
 </resources>

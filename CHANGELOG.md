@@ -26,5 +26,11 @@ All notable changes to this project are documented here.
   - Verifies the SHA-256 from the release metadata.
   - Opens Android's package installer via a `FileProvider`.
   - Opens the “install unknown apps” settings when required.
+- Responsive UI refresh:
+  - New design system with shared cards, gradient headers, pills, and empty states.
+  - Adaptive card grids and two-pane layouts for tablets and landscape screens.
+  - Navigation rail on large screens, bottom navigation on phones.
+  - Responsive authentication and medication-form layouts.
+  - Light/dark theme support with transparent system bars.
 - GitHub Actions CI and tag-based signed release workflow.
 - `latest.json` release asset for a future in-app update checker.
