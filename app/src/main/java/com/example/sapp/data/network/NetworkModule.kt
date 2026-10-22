@@ -13,13 +13,17 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import com.example.sapp.data.local.dataStore
 
-class AuthInterceptor(private val context: Context) : Interceptor {
-    private val appContext = context.applicationContext
+class AuthInterceptor(
+    private val tokenProvider: suspend () -> String?
+) : Interceptor {
+
+    constructor(context: Context) : this({
+        val tokenKey = stringPreferencesKey("jwt_token")
+        context.applicationContext.dataStore.data.first()[tokenKey]
+    })
 
     override fun intercept(chain: Interceptor.Chain): okhttp3.Response {
-
-        val tokenKey = stringPreferencesKey("jwt_token")
-        val token = runBlocking { context.dataStore.data.first()[tokenKey] }
+        val token = runBlocking { tokenProvider() }
 
         val request = chain.request().newBuilder().apply {
             if (!token.isNullOrEmpty()) {
@@ -30,11 +34,26 @@ class AuthInterceptor(private val context: Context) : Interceptor {
     }
 }
 
+/**
+ * Logs request/response headers only, never bodies. Bodies can contain the
+ * patient JWT (login response) or raw JPEG bytes (evidence upload), so they
+ * must not reach logcat. Authorization is redacted as well.
+ */
+private class SafeHttpLoggingInterceptor : Interceptor {
+    private val logger = HttpLoggingInterceptor().apply {
+        level = HttpLoggingInterceptor.Level.HEADERS
+        redactHeader("Authorization")
+    }
+
+    override fun intercept(chain: Interceptor.Chain): okhttp3.Response =
+        logger.intercept(chain)
+}
+
 object RetrofitClient {
     fun getApiService(context: Context): ApiService {
         val client = OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor(context))
-            .addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY })
+            .addInterceptor(SafeHttpLoggingInterceptor())
             .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
             .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
             .build()

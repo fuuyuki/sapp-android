@@ -102,7 +102,13 @@ data class MedlogOut(
     val scheduled_time: String,
     val status: String,
     val patient_id: UUID,
-    val device_id: String
+    val device_id: String,
+    // Added by the evidence feature. Nullable because older logs (and the
+    // server's medlog list before evidence is attached) do not contain them.
+    val verification_method: String? = null,
+    val verification_confidence: Double? = null,
+    val verified_at: String? = null,
+    val evidence_key: String? = null
 )
 
 data class MessageResponse(val message: String)
