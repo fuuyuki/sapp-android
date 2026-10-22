@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.History
@@ -19,7 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.sapp.data.model.MedlogOut
 import com.example.sapp.R
+import com.example.sapp.verification.MedlogMatcher
 import java.text.SimpleDateFormat
+import java.time.OffsetDateTime
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -27,7 +30,8 @@ import java.util.*
 fun MedicationLogsScreen(
     logs: List<MedlogOut>,
     onBack: () -> Unit,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onVerifyLog: ((MedlogOut) -> Unit)? = null
 ) {
     Scaffold(
         topBar = {
@@ -97,7 +101,14 @@ fun MedicationLogsScreen(
                 // Sort logs by time, descending (latest first)
                 val sortedLogs = logs.sortedByDescending { it.scheduled_time }
                 items(sortedLogs) { log ->
-                    MedlogCard(log)
+                    val canVerify = onVerifyLog != null &&
+                            log.evidence_key.isNullOrEmpty() &&
+                            log.status.equals("taken", ignoreCase = true) &&
+                            MedlogMatcher.isWithinWindow(log.scheduled_time, OffsetDateTime.now())
+                    val verifyAction: (() -> Unit)? = if (canVerify) {
+                        onVerifyLog?.let { callback -> { callback(log) } }
+                    } else null
+                    MedlogCard(log = log, onVerify = verifyAction)
                 }
             }
         }
@@ -105,7 +116,7 @@ fun MedicationLogsScreen(
 }
 
 @Composable
-fun MedlogCard(log: MedlogOut) {
+fun MedlogCard(log: MedlogOut, onVerify: (() -> Unit)? = null) {
     val isTaken = log.status.lowercase() == "taken"
     val statusColor = if (isTaken) Color(0xFF4CAF50) else MaterialTheme.colorScheme.error
     val statusIcon = if (isTaken) Icons.Default.CheckCircle else Icons.Default.Error
@@ -115,48 +126,80 @@ fun MedlogCard(log: MedlogOut) {
         elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Status Icon
-            Icon(
-                imageVector = statusIcon,
-                contentDescription = log.status,
-                tint = statusColor,
-                modifier = Modifier.size(32.dp)
-            )
-
-            Spacer(Modifier.width(16.dp))
-
-            // Info Section
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = log.pillname,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+        Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Status Icon
+                Icon(
+                    imageVector = statusIcon,
+                    contentDescription = log.status,
+                    tint = statusColor,
+                    modifier = Modifier.size(32.dp)
                 )
-                Text(
-                    text = formatIsoDateTime(log.scheduled_time),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+
+                Spacer(Modifier.width(16.dp))
+
+                // Info Section
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = log.pillname,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = formatIsoDateTime(log.scheduled_time),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                // Status Badge
+                Surface(
+                    color = statusColor.copy(alpha = 0.1f),
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        text = log.status.uppercase(),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = statusColor
+                    )
+                }
             }
 
-            // Status Badge
-            Surface(
-                color = statusColor.copy(alpha = 0.1f),
-                shape = MaterialTheme.shapes.small
-            ) {
-                Text(
-                    text = log.status.uppercase(),
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = statusColor
-                )
+            if (!log.evidence_key.isNullOrEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = Color(0xFF4CAF50),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    val percent = log.verification_confidence
+                        ?.let { " - ${(it.coerceIn(0.0, 1.0) * 100).toInt()}%" }
+                        .orEmpty()
+                    Text(
+                        text = stringResource(R.string.mouth_verified_label) + percent,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else if (isTaken && onVerify != null) {
+                Spacer(Modifier.height(4.dp))
+                TextButton(onClick = onVerify) {
+                    Icon(
+                        Icons.Default.CameraAlt,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.verify_with_camera))
+                }
             }
         }
     }

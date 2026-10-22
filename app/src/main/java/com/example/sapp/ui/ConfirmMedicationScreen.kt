@@ -1,54 +1,50 @@
 package com.example.sapp.ui
 
-import androidx.camera.core.CameraSelector
-import androidx.camera.view.LifecycleCameraController
-import androidx.camera.view.PreviewView
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeFloatingActionButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.res.stringResource
 import com.example.sapp.R
 
+/**
+ * Due-dose entry point. It resolves the medication that is due now and opens
+ * [com.example.sapp.verification.MouthVerificationActivity] on an explicit tap,
+ * so the camera never starts silently. The actual CameraX + MediaPipe flow
+ * lives in that activity.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConfirmMedicationScreen(
+    duePillName: String?,
     onBack: () -> Unit,
-    onConfirm: () -> Unit
+    onStartVerification: (String) -> Unit
 ) {
-    val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-
-    // Initialize CameraController for the Front Camera
-    val cameraController = remember {
-        LifecycleCameraController(context).apply {
-            cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
-//            bindToLifecycle(lifecycleOwner)
-        }
-    }
-
-    // Bind the lifecycle properly
-    LaunchedEffect(Unit) {
-        cameraController.bindToLifecycle(lifecycleOwner)
-    }
-
-
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -64,7 +60,7 @@ fun ConfirmMedicationScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.back),
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
@@ -76,80 +72,77 @@ fun ConfirmMedicationScreen(
             )
         },
         floatingActionButton = {
-            // Large Capture Button
-            LargeFloatingActionButton(
-                onClick = {
-                    // In a production app, you would call cameraController.takePicture here
-                    // For this prototype, we trigger the confirmation callback
-                    onConfirm()
-                },
-                containerColor = MaterialTheme.colorScheme.primary,
-                shape = CircleShape,
-                modifier = Modifier.padding(bottom = 16.dp)
-            ) {
-                Icon(
-                    Icons.Default.CameraAlt,
-                    contentDescription = "Capture",
-                    modifier = Modifier.size(36.dp)
-                )
+            if (duePillName != null) {
+                LargeFloatingActionButton(
+                    onClick = { onStartVerification(duePillName) },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    shape = CircleShape,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                ) {
+                    Icon(
+                        Icons.Default.CameraAlt,
+                        contentDescription = stringResource(R.string.start_scanning),
+                        modifier = Modifier.size(36.dp)
+                    )
+                }
             }
         },
         floatingActionButtonPosition = FabPosition.Center
     ) { padding ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Color.Black) // Standard camera background
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Camera Preview View
-            AndroidView(
-                factory = { ctx ->
-                    PreviewView(ctx).apply {
-                        // Use implementation mode to ensure better compatibility
-                        implementationMode = PreviewView.ImplementationMode.COMPATIBLE
-                        controller = cameraController
-                    }
-                },
-                modifier = Modifier.fillMaxSize(),
-                update = { previewView ->
-                    previewView.controller = cameraController
-                }
+            Icon(
+                Icons.Default.CameraAlt,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(72.dp)
             )
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = stringResource(R.string.mouth_verification_title),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.height(12.dp))
 
-            // Instruction Overlay
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopCenter)
-                    .padding(24.dp)
-            ) {
-                Surface(
-                    color = Color.Black.copy(alpha = 0.6f),
-                    shape = MaterialTheme.shapes.medium
+            if (duePillName != null) {
+                Text(
+                    text = stringResource(R.string.confirm_meds_due, duePillName),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = stringResource(R.string.confirm_meds_intro),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(Modifier.height(24.dp))
+                Button(
+                    onClick = { onStartVerification(duePillName) },
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = stringResource(R.string.camera_instruction),
-                        modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White,
-                        textAlign = TextAlign.Center
-                    )
+                    Icon(Icons.Default.CameraAlt, contentDescription = null)
+                    Spacer(Modifier.size(8.dp))
+                    Text(stringResource(R.string.start_scanning))
                 }
+            } else {
+                Text(
+                    text = stringResource(R.string.confirm_meds_no_due),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
             }
-
-            // Bottom decorative gradient/mask to make the capture button pop
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp)
-                    .align(Alignment.BottomCenter)
-                    .background(
-                        brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.4f))
-                        )
-                    )
-            )
         }
     }
 }
