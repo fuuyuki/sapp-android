@@ -39,6 +39,10 @@ android {
     buildFeatures {
         compose = true
     }
+    androidResources {
+        // MediaPipe loads the .task model with AssetManager; keep it uncompressed.
+        noCompress += "task"
+    }
 }
 
 dependencies {
@@ -95,8 +99,12 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
 
+    // On-device face landmarks (mouth-open detection)
+    implementation(libs.mediapipe.tasks.vision)
+
     // Testing
     testImplementation(libs.junit)
+    testImplementation(libs.okhttp.mockwebserver)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
