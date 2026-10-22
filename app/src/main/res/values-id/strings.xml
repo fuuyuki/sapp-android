@@ -48,6 +48,9 @@
     <!-- Patient Specific -->
     <string name="confirm_meds">Konfirmasi Minum</string>
     <string name="verify_meds">Verifikasi Pengobatan</string>
+    <string name="confirm_meds_due">Dosis: %1$s</string>
+    <string name="confirm_meds_intro">Ketuk mulai, lalu buka mulut dan tahan sekitar setengah detik. Satu foto dilampirkan ke dosis yang dilaporkan kotak obat. Status tetap ditentukan oleh kotak obat.</string>
+    <string name="confirm_meds_no_due">Tidak ada jadwal obat. Tambahkan jadwal obat terlebih dahulu.</string>
     <string name="camera_instruction">Pastikan wajah Anda dan obat terlihat dalam frame.</string>
     <string name="health_snapshot">Ringkasan Kepatuhan</string>
     <string name="next_dose">Jadwal Berikutnya</string>
@@ -69,4 +72,28 @@
     <string name="last_seen">Terakhir terlihat: %1$s</string>
     <string name="online">Online</string>
     <string name="offline">Offline</string>
+    <!-- Camera mouth verification -->
+    <string name="verify_with_camera">Verifikasi dengan kamera</string>
+    <string name="mouth_verification_title">Verifikasi mulut</string>
+    <string name="mouth_verification_idle">Kami akan memeriksa apakah mulut Anda terbuka, lalu melampirkan satu foto sebagai bukti tambahan untuk dosis ini. Kamera hanya menyala setelah Anda menekan tombol di bawah.</string>
+    <string name="start_scanning">Nyalakan kamera</string>
+    <string name="mouth_scanning_hint">Buka mulut Anda dan tahan sekitar setengah detik.</string>
+    <string name="mouth_uploading">Mulut terbuka terdeteksi. Menyiapkan foto\u2026</string>
+    <string name="mouth_queued">Bukti dalam antrean. Akan diunggah saat Anda online.</string>
+    <string name="mouth_uploaded">Bukti kamera berhasil diunggah.</string>
+    <string name="mouth_already_verified">Dosis ini sudah memiliki bukti kamera.</string>
+    <string name="mouth_confidence">Tingkat keyakinan deteksi: %1$d%%</string>
+    <string name="mouth_waiting_pillbox">Menunggu kotak obat melaporkan dosis ini.</string>
+    <string name="check_again">Periksa lagi</string>
+    <string name="scan_again">Pindai lagi</string>
+    <string name="close">Tutup</string>
+    <string name="open_settings">Buka pengaturan</string>
+    <string name="camera_permission_required">Izin kamera diperlukan untuk memverifikasi pengobatan.</string>
+    <string name="no_front_camera">Kamera depan tidak tersedia di perangkat ini.</string>
+    <string name="camera_start_failed">Kamera tidak dapat dinyalakan.</string>
+    <string name="mouth_detector_unavailable">Deteksi mulut tidak tersedia di perangkat ini.</string>
+    <string name="mouth_capture_failed">Foto yang diambil tidak dapat disimpan.</string>
+    <string name="mouth_upload_failed">Bukti kamera gagal diunggah. Periksa koneksi Anda dan coba lagi.</string>
+    <string name="mouth_cooldown">Verifikasi baru saja diambil. Coba lagi sekitar %1$d menit.</string>
+    <string name="mouth_verified_label">Terverifikasi kamera</string>
 </resources>

@@ -48,6 +48,9 @@
     <!-- Patient Specific -->
     <string name="confirm_meds">Confirm Meds</string>
     <string name="verify_meds">Verify Medication</string>
+    <string name="confirm_meds_due">Dose: %1$s</string>
+    <string name="confirm_meds_intro">Tap start, then open your mouth and hold for about half a second. One photo is attached to the dose the pillbox reports. The pillbox still decides taken or missed.</string>
+    <string name="confirm_meds_no_due">No scheduled medication found. Add a medication schedule first.</string>
     <string name="camera_instruction">Please ensure your face and the medication are visible in the frame.</string>
     <string name="health_snapshot">Health Snapshot</string>
     <string name="next_dose">Next Dose</string>
@@ -69,4 +72,28 @@
     <string name="last_seen">Last seen: %1$s</string>
     <string name="online">Online</string>
     <string name="offline">Offline</string>
+    <!-- Camera mouth verification -->
+    <string name="verify_with_camera">Verify with camera</string>
+    <string name="mouth_verification_title">Mouth verification</string>
+    <string name="mouth_verification_idle">We will check that your mouth is open, then attach one photo to this dose as extra proof. The camera starts only after you tap the button below.</string>
+    <string name="start_scanning">Start camera</string>
+    <string name="mouth_scanning_hint">Open your mouth and hold for about half a second.</string>
+    <string name="mouth_uploading">Mouth open detected. Preparing your photo\u2026</string>
+    <string name="mouth_queued">Proof queued. It will upload when you are online.</string>
+    <string name="mouth_uploaded">Camera proof uploaded.</string>
+    <string name="mouth_already_verified">This dose already has camera proof.</string>
+    <string name="mouth_confidence">Detection confidence: %1$d%%</string>
+    <string name="mouth_waiting_pillbox">Waiting for the pillbox to report this dose.</string>
+    <string name="check_again">Check again</string>
+    <string name="scan_again">Scan again</string>
+    <string name="close">Close</string>
+    <string name="open_settings">Open settings</string>
+    <string name="camera_permission_required">Camera permission is required to verify medication.</string>
+    <string name="no_front_camera">No front camera is available on this device.</string>
+    <string name="camera_start_failed">The camera could not be started.</string>
+    <string name="mouth_detector_unavailable">Mouth detection is unavailable on this device.</string>
+    <string name="mouth_capture_failed">Could not save the captured photo.</string>
+    <string name="mouth_upload_failed">Could not upload the camera proof. Check your connection and try again.</string>
+    <string name="mouth_cooldown">A verification was captured recently. Try again in about %1$d min.</string>
+    <string name="mouth_verified_label">Camera verified</string>
 </resources>
